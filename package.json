@@ -1,0 +1,19 @@
+{
+  "name": "collabdocs",
+  "private": true,
+  "version": "0.1.0",
+  "description": "CollabDocs — real-time collaborative document editor",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "web": "pnpm --filter @collabdocs/web dev",
+    "server": "pnpm --filter @collabdocs/server dev"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
