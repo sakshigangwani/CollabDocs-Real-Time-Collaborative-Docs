@@ -1,2 +1,80 @@
-/* This single line pulls in all of Tailwind (v4 style). */
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* surfaces (backgrounds, back to front) */
+  --canvas: #f8fafc;        /* the page background */
+  --surface: #ffffff;       /* cards, panels, the editor sheet */
+  --surface-muted: #f1f5f9; /* subtle fills, hover rows */
+
+  /* text */
+  --fg: #0f172a;            /* primary text */
+  --muted: #64748b;         /* secondary / hint text */
+
+  /* lines */
+  --border: #e2e8f0;
+
+  /* brand (the accent / primary action color) */
+  --brand: #2563eb;
+  --brand-hover: #1d4ed8;
+  --brand-fg: #ffffff;      /* text/icons sitting ON a brand button */
+
+  /* status colors */
+  --success: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+}
+
+.dark {
+  --canvas: #0b0f17;
+  --surface: #131a26;
+  --surface-muted: #1c2533;
+
+  --fg: #f1f5f9;
+  --muted: #94a3b8;
+
+  --border: #29374a;
+
+  --brand: #3b82f6;
+  --brand-hover: #60a5fa;
+  --brand-fg: #0b0f17;
+
+  --success: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-fg: var(--brand-fg);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-serif: ui-serif, Georgia, serif;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+}
+
+@layer base {
+  body {
+    background-color: var(--canvas);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
