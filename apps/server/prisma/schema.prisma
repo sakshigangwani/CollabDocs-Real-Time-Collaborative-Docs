@@ -1,0 +1,138 @@
+// CollabDocs database schema.
+//
+// This is the "shape" of our data. Each `model` becomes a table in Postgres.
+// Prisma reads this file to (1) create/update the database (migrations) and
+// (2) generate a fully-typed client so our code gets autocomplete + safety.
+//
+// We start with the FOUNDATION tables. Comments, versions, notifications,
+// etc. get added as we build those features (just append models + migrate).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Roles (fixed sets of allowed values)
+// ---------------------------------------------------------------------------
+
+// A person's role inside a whole workspace.
+enum WorkspaceRole {
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+// A person's permission on a single document. Higher = more power.
+// OWNER > EDITOR > COMMENTER > VIEWER
+enum DocRole {
+  OWNER
+  EDITOR
+  COMMENTER
+  VIEWER
+}
+
+// Who an access rule applies to: a specific user, everyone in a workspace,
+// or anyone holding a share link.
+enum PrincipalType {
+  USER
+  WORKSPACE
+  LINK
+}
+
+// ---------------------------------------------------------------------------
+// Core tables
+// ---------------------------------------------------------------------------
+
+// A person with an account.
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  avatarUrl    String?
+  passwordHash String? // null when they sign in only via Google/OAuth
+  createdAt    DateTime @default(now())
+  lastActiveAt DateTime @default(now())
+
+  // Links to other tables:
+  ownedWorkspaces  Workspace[]       @relation("WorkspaceOwner")
+  memberships      WorkspaceMember[]
+  createdDocuments Document[]        @relation("DocCreator")
+}
+
+// A tenant boundary. Users, documents, and billing all live under a workspace.
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique // used in URLs, e.g. /w/acme
+  plan      String   @default("free")
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  owner     User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  members   WorkspaceMember[]
+  documents Document[]
+}
+
+// Join table: which users belong to which workspace, and their role.
+// The primary key is the (workspace, user) pair — a user can't join twice.
+model WorkspaceMember {
+  workspaceId String
+  userId      String
+  role        WorkspaceRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+}
+
+// A document (or a folder — folders are just documents that hold children).
+model Document {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  parentFolderId String? // null = top level; otherwise points at a parent doc
+  title          String    @default("Untitled")
+  icon           String?
+  coverUrl       String?
+  createdById    String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // set when moved to Trash (soft delete)
+
+  // Pointer to the latest realtime-editing snapshot in object storage.
+  // Filled in once collaborative editing is wired up (later step).
+  snapshotKey     String?
+  snapshotVersion Int     @default(0)
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent    Document?     @relation("Folder", fields: [parentFolderId], references: [id])
+  children  Document[]    @relation("Folder")
+  createdBy User          @relation("DocCreator", fields: [createdById], references: [id])
+  acl       DocumentAcl[]
+
+  // Speeds up the home feed: "newest documents in this workspace".
+  @@index([workspaceId, updatedAt])
+}
+
+// One access rule for a document. The combination of these rows answers
+// "who can do what" — e.g. user X is EDITOR, the workspace is VIEWER,
+// anyone with the LINK is COMMENTER until it expires.
+model DocumentAcl {
+  id            String        @id @default(uuid())
+  documentId    String
+  principalType PrincipalType
+  principalId   String? // a user id, a workspace id, or null for "anyone with link"
+  role          DocRole
+  expiresAt     DateTime? // optional expiry for share links
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([principalId])
+}

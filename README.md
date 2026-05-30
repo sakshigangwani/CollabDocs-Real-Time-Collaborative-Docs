@@ -21,18 +21,37 @@ and talk over HTTP.
 # 1. Install dependencies for both apps (run once)
 pnpm install
 
-# 2. Set up env vars (optional for now — defaults work locally)
-cp .env.example .env
+# 2. Point the server at a Postgres database
+cp apps/server/.env.example apps/server/.env
+#   then edit DATABASE_URL inside it (see "Database" below)
 
-# 3. Run both apps together
+# 3. Create the tables, then add a little demo data
+pnpm --filter @collabdocs/server db:migrate
+pnpm --filter @collabdocs/server db:seed
+
+# 4. Run both apps together
 pnpm dev
 ```
 
 Then open:
 - **Frontend:** http://localhost:5173
-- **Backend health check:** http://localhost:4000/health
+- **Backend health:** http://localhost:4000/health
+- **DB health:** http://localhost:4000/health/db  → should show `"users": 1`
 
-If the dot on the homepage is green, the frontend successfully reached the backend. ✅
+If the dot on the homepage is green, the frontend reached the backend. ✅
+
+## Database
+
+Uses **PostgreSQL** via **Prisma**. Schema lives in `apps/server/prisma/schema.prisma`.
+
+```bash
+pnpm --filter @collabdocs/server db:migrate    # apply schema changes
+pnpm --filter @collabdocs/server db:seed       # reset + add demo data
+pnpm --filter @collabdocs/server db:studio     # visual table browser
+```
+
+Tables so far: `User`, `Workspace`, `WorkspaceMember`, `Document`, `DocumentAcl`.
+More get added as features land (comments, versions, notifications…).
 
 ## Run just one app
 

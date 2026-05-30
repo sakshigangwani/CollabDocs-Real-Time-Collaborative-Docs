@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import { prisma } from "./db.js";
 
 const app = Fastify({ logger: true });
 
@@ -7,9 +8,13 @@ await app.register(cors, {
   origin: process.env.WEB_ORIGIN ?? "http://localhost:5173",
 });
 
-
 app.get("/health", async () => {
   return { status: "ok", service: "collabdocs-server" };
+});
+
+app.get("/health/db", async () => {
+  const users = await prisma.user.count();
+  return { status: "ok", database: "connected", users };
 });
 
 const port = Number(process.env.PORT ?? 4000);
