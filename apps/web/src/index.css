@@ -3,25 +3,21 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* surfaces (backgrounds, back to front) */
-  --canvas: #f8fafc;        /* the page background */
-  --surface: #ffffff;       /* cards, panels, the editor sheet */
-  --surface-muted: #f1f5f9; /* subtle fills, hover rows */
 
-  /* text */
-  --fg: #0f172a;            /* primary text */
-  --muted: #64748b;         /* secondary / hint text */
+  --canvas: #f8fafc;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
 
-  /* lines */
+  --fg: #0f172a;
+  --muted: #64748b;
+
   --border: #e2e8f0;
 
-  /* brand (the accent / primary action color) */
   --brand: #2563eb;
   --brand-hover: #1d4ed8;
-  --brand-fg: #ffffff;      /* text/icons sitting ON a brand button */
-  --accent: #7c3aed;        /* second color, used in gradients with brand */
+  --brand-fg: #ffffff;
+  --accent: #7c3aed;
 
-  /* status colors */
   --success: #16a34a;
   --warn: #d97706;
   --danger: #dc2626;
@@ -82,12 +78,6 @@
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Visual effects (used by the landing page)                          */
-/* ------------------------------------------------------------------ */
-
-/* Subtle dotted-grid background. Dots use the theme border color so it
-   adapts to light/dark automatically. */
 .bg-grid {
   background-image: radial-gradient(
     color-mix(in srgb, var(--border) 70%, transparent) 1px,
@@ -96,7 +86,6 @@
   background-size: 24px 24px;
 }
 
-/* A soft gradient text using brand → accent. */
 .text-gradient {
   background-image: linear-gradient(120deg, var(--brand), var(--accent));
   background-clip: text;
@@ -104,8 +93,6 @@
   color: transparent;
 }
 
-/* Slowly drifting blurred color blobs (the ambient "glow" behind the hero).
-   They're decorative, so they sit behind everything and ignore the mouse. */
 @keyframes blob {
   0%,
   100% {
@@ -122,7 +109,6 @@
   animation: blob 14s ease-in-out infinite;
 }
 
-/* Blinking text cursor for the typing effect in the hero mock document. */
 @keyframes caret {
   0%,
   100% {
@@ -136,7 +122,6 @@
   animation: caret 1s step-end infinite;
 }
 
-/* Respect users who prefer reduced motion: turn the looping effects off. */
 @media (prefers-reduced-motion: reduce) {
   .animate-blob,
   .animate-caret {
