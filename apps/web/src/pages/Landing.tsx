@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, type Variants } from "framer-motion";
 import {
   Users,
@@ -26,7 +27,7 @@ const features = [
     icon: Users,
     title: "Real-time editing",
     description:
-      "See teammates' cursors and edits appear instantly — character by character, no refresh.",
+      "See teammates' cursors and edits appear instantly - character by character, no refresh.",
   },
   {
     icon: MessageSquare,
@@ -76,6 +77,7 @@ function useTypewriter(text: string, speed = 70) {
 
 export default function Landing() {
   const typed = useTypewriter("Q3 Product Roadmap");
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen">
@@ -86,10 +88,14 @@ export default function Landing() {
             <span className="text-lg font-semibold">CollabDocs</span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="hidden rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-muted sm:block">
+            <button
+              onClick={() => navigate("/login")}
+              className="hidden rounded-lg px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-muted sm:block"
+            >
               Sign in
             </button>
             <motion.button
+              onClick={() => navigate("/signup")}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-fg shadow-lg shadow-brand/25 transition-colors hover:bg-brand-hover"
@@ -101,7 +107,6 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* ---------- Hero ---------- */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div
@@ -148,7 +153,7 @@ export default function Landing() {
             className="mx-auto mt-6 max-w-xl text-lg text-muted"
           >
             CollabDocs is a collaborative document editor where your whole team
-            can write, comment, and edit the same doc at once — so working
+            can write, comment, and edit the same doc at once - so working
             together feels as smooth as a single person typing.
           </motion.p>
 
@@ -157,13 +162,15 @@ export default function Landing() {
             className="mt-9 flex items-center justify-center gap-3"
           >
             <motion.button
+              onClick={() => navigate("/signup")}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               className="rounded-xl bg-brand px-6 py-3 font-medium text-brand-fg shadow-xl shadow-brand/30 transition-colors hover:bg-brand-hover"
             >
-              Get started — it's free
+              Get started - it's free
             </motion.button>
             <motion.button
+              onClick={() => navigate("/login")}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               className="rounded-xl border border-border bg-surface px-6 py-3 font-medium transition-colors hover:bg-surface-muted"
@@ -229,7 +236,7 @@ export default function Landing() {
             <span className="text-gradient">collaborate</span>
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted">
-            A complete document workspace — from the first keystroke to the
+            A complete document workspace - from the first keystroke to the
             final shared version.
           </p>
         </motion.div>
@@ -270,11 +277,12 @@ export default function Landing() {
               document in seconds.
             </p>
             <motion.button
+              onClick={() => navigate("/signup")}
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               className="mt-8 rounded-xl bg-white px-6 py-3 font-semibold text-brand shadow-xl"
             >
-              Get started, it's free
+              Get started - it's free
             </motion.button>
           </div>
         </div>
