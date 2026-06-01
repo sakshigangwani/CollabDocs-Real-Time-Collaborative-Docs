@@ -14,14 +14,24 @@ import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../auth/AuthContext";
 
-const navItems = [
-  { icon: FileText, label: "All documents", active: true },
-  { icon: Users, label: "Shared with me", active: false },
-  { icon: Star, label: "Favorites", active: false },
-  { icon: Trash2, label: "Trash", active: false },
+export type View = "all" | "shared" | "favorites" | "trash";
+
+const navItems: { key: View; icon: typeof FileText; label: string }[] = [
+  { key: "all", icon: FileText, label: "All documents" },
+  { key: "shared", icon: Users, label: "Shared with me" },
+  { key: "favorites", icon: Star, label: "Favorites" },
+  { key: "trash", icon: Trash2, label: "Trash" },
 ];
 
-export default function Sidebar({ onNew }: { onNew: () => void }) {
+export default function Sidebar({
+  onNew,
+  active,
+  onNavigate,
+}: {
+  onNew: () => void;
+  active: View;
+  onNavigate: (view: View) => void;
+}) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(
@@ -104,7 +114,8 @@ export default function Sidebar({ onNew }: { onNew: () => void }) {
         )}
         {navItems.map((item) => (
           <button
-            key={item.label}
+            key={item.key}
+            onClick={() => onNavigate(item.key)}
             title={collapsed ? item.label : undefined}
             className={
               "flex items-center rounded-lg text-sm font-medium transition-colors " +
@@ -112,7 +123,7 @@ export default function Sidebar({ onNew }: { onNew: () => void }) {
                 ? "mx-auto h-10 w-10 justify-center"
                 : "w-full gap-3 px-3 py-2") +
               " " +
-              (item.active
+              (active === item.key
                 ? "bg-brand/10 text-brand"
                 : "text-fg hover:bg-surface-muted")
             }

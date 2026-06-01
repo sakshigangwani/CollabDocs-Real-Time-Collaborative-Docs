@@ -11,6 +11,7 @@ function publicDoc(doc: Document) {
     icon: doc.icon,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
+    deletedAt: doc.deletedAt,
   };
 }
 
@@ -103,6 +104,51 @@ export async function documentRoutes(app: FastifyInstance) {
       where: { id },
       data: { deletedAt: new Date() },
     });
+    return { ok: true };
+  });
+
+  app.get("/api/v1/documents/trash", async (req, reply) => {
+    const user = req.user;
+    if (!user) return reply.code(401).send({ error: "Not signed in." });
+
+    const workspaceId = await getWorkspaceId(user);
+    const docs = await prisma.document.findMany({
+      where: { workspaceId, deletedAt: { not: null } },
+      orderBy: { deletedAt: "desc" },
+    });
+    return { documents: docs.map(publicDoc) };
+  });
+
+  app.post("/api/v1/documents/:id/restore", async (req, reply) => {
+    const user = req.user;
+    if (!user) return reply.code(401).send({ error: "Not signed in." });
+
+    const { id } = req.params as { id: string };
+    const workspaceId = await getWorkspaceId(user);
+    const existing = await prisma.document.findFirst({
+      where: { id, workspaceId, deletedAt: { not: null } },
+    });
+    if (!existing) return reply.code(404).send({ error: "Document not found." });
+
+    const doc = await prisma.document.update({
+      where: { id },
+      data: { deletedAt: null },
+    });
+    return { document: publicDoc(doc) };
+  });
+
+  app.delete("/api/v1/documents/:id/permanent", async (req, reply) => {
+    const user = req.user;
+    if (!user) return reply.code(401).send({ error: "Not signed in." });
+
+    const { id } = req.params as { id: string };
+    const workspaceId = await getWorkspaceId(user);
+    const existing = await prisma.document.findFirst({
+      where: { id, workspaceId, deletedAt: { not: null } },
+    });
+    if (!existing) return reply.code(404).send({ error: "Document not found." });
+
+    await prisma.document.delete({ where: { id } });
     return { ok: true };
   });
 }

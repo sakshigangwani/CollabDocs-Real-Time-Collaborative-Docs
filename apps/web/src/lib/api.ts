@@ -13,6 +13,7 @@ export type DocumentDTO = {
   icon: string | null;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
 };
 
 async function request(method: string, path: string, body?: unknown) {
@@ -57,6 +58,17 @@ export const api = {
       return data.document;
     },
     remove: (id: string) => request("DELETE", `/api/v1/documents/${id}`),
+
+    listTrash: async (): Promise<DocumentDTO[]> => {
+      const data = await request("GET", "/api/v1/documents/trash");
+      return data.documents;
+    },
+    restore: async (id: string): Promise<DocumentDTO> => {
+      const data = await request("POST", `/api/v1/documents/${id}/restore`);
+      return data.document;
+    },
+    destroy: (id: string) =>
+      request("DELETE", `/api/v1/documents/${id}/permanent`),
   },
 };
 

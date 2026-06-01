@@ -1,50 +1,85 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FileText, Plus, Search, LogOut } from "lucide-react";
-import Sidebar from "../components/Sidebar";
+import { FileText, Plus, Search, LogOut, Trash2 } from "lucide-react";
+import Sidebar, { type View } from "../components/Sidebar";
 import DocumentCard from "../components/DocumentCard";
+import TrashItem from "../components/TrashItem";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../auth/AuthContext";
 import { api, type DocumentDTO } from "../lib/api";
 
+const titles: Record<View, string> = {
+  all: "All documents",
+  shared: "Shared with me",
+  favorites: "Favorites",
+  trash: "Trash",
+};
+
 export default function Home() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [docs, setDocs] = useState<DocumentDTO[]>([]);
+  const [view, setView] = useState<View>("all");
+  const [items, setItems] = useState<DocumentDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState("");
 
   const firstName = (user?.name ?? "My").split(" ")[0];
-  const filtered = docs.filter((d) =>
+  const filtered = items.filter((d) =>
     d.title.toLowerCase().includes(query.trim().toLowerCase())
   );
+  const searchable = view === "all" || view === "trash";
 
   useEffect(() => {
-    api.documents
-      .list()
-      .then(setDocs)
-      .catch(() => setDocs([]))
-      .finally(() => setLoading(false));
-  }, []);
+    setQuery("");
+    if (view === "all" || view === "trash") {
+      setLoading(true);
+      const load =
+        view === "trash" ? api.documents.listTrash() : api.documents.list();
+      load
+        .then(setItems)
+        .catch(() => setItems([]))
+        .finally(() => setLoading(false));
+    } else {
+      setItems([]);
+      setLoading(false);
+    }
+  }, [view]);
 
   async function handleNew() {
     setCreating(true);
     try {
       const doc = await api.documents.create();
-      setDocs((prev) => [doc, ...prev]);
+      if (view === "all") setItems((prev) => [doc, ...prev]);
+      else setView("all");
     } finally {
       setCreating(false);
     }
   }
 
   function handleDelete(id: string) {
-    setDocs((prev) => prev.filter((d) => d.id !== id));
-    api.documents.remove(id).catch(() => {
-      api.documents.list().then(setDocs);
-    });
+    setItems((prev) => prev.filter((d) => d.id !== id));
+    api.documents.remove(id).catch(() => api.documents.list().then(setItems));
+  }
+
+  function handleRestore(id: string) {
+    setItems((prev) => prev.filter((d) => d.id !== id));
+    api.documents
+      .restore(id)
+      .catch(() => api.documents.listTrash().then(setItems));
+  }
+
+  function handleDestroy(id: string) {
+    if (
+      !window.confirm("Permanently delete this document? This can't be undone.")
+    )
+      return;
+    setItems((prev) => prev.filter((d) => d.id !== id));
+    api.documents
+      .destroy(id)
+      .catch(() => api.documents.listTrash().then(setItems));
   }
 
   async function handleLogout() {
@@ -52,9 +87,18 @@ export default function Home() {
     navigate("/");
   }
 
+  function subtitle() {
+    if (loading) return "Loading…";
+    if (view === "all")
+      return `${items.length} document${items.length === 1 ? "" : "s"} in ${firstName}'s Workspace`;
+    if (view === "trash")
+      return `${items.length} item${items.length === 1 ? "" : "s"} in trash`;
+    return "Coming soon";
+  }
+
   return (
     <div className="flex min-h-screen bg-canvas">
-      <Sidebar onNew={handleNew} />
+      <Sidebar onNew={handleNew} active={view} onNavigate={setView} />
 
       <main className="flex-1">
         <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 md:hidden">
@@ -77,35 +121,41 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6 py-8 md:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">All documents</h1>
-              <p className="mt-1 text-sm text-muted">
-                {loading
-                  ? "Loading…"
-                  : `${docs.length} document${docs.length === 1 ? "" : "s"} in ${firstName}'s Workspace`}
-              </p>
+              <h1 className="text-2xl font-bold tracking-tight">
+                {titles[view]}
+              </h1>
+              <p className="mt-1 text-sm text-muted">{subtitle()}</p>
             </div>
-            <button
-              onClick={handleNew}
-              disabled={creating}
-              className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-brand-fg shadow-lg shadow-brand/25 transition-colors hover:bg-brand-hover disabled:opacity-60"
-            >
-              <Plus size={18} />
-              {creating ? "Creating…" : "New document"}
-            </button>
+            {view === "all" && (
+              <button
+                onClick={handleNew}
+                disabled={creating}
+                className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-brand-fg shadow-lg shadow-brand/25 transition-colors hover:bg-brand-hover disabled:opacity-60"
+              >
+                <Plus size={18} />
+                {creating ? "Creating…" : "New document"}
+              </button>
+            )}
           </div>
 
-          <div className="relative mt-6 max-w-md">
-            <Search
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
-            />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search documents..."
-              className="w-full rounded-xl border border-border bg-surface py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </div>
+          {searchable && (
+            <div className="relative mt-6 max-w-md">
+              <Search
+                size={16}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={
+                  view === "trash"
+                    ? "Search trash..."
+                    : "Search documents..."
+                }
+                className="w-full rounded-xl border border-border bg-surface py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+            </div>
+          )}
 
           {loading ? (
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -122,20 +172,33 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          ) : view === "shared" || view === "favorites" ? (
+            <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
+              <h2 className="font-semibold">Coming soon</h2>
+              <p className="mt-1 max-w-xs text-sm text-muted">
+                This section isn't built yet.
+              </p>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-                <FileText size={26} />
+                {view === "trash" ? <Trash2 size={26} /> : <FileText size={26} />}
               </div>
               <h2 className="mt-4 font-semibold">
-                {query ? "No documents found" : "No documents yet"}
+                {query
+                  ? "Nothing found"
+                  : view === "trash"
+                    ? "Trash is empty"
+                    : "No documents yet"}
               </h2>
               <p className="mt-1 max-w-xs text-sm text-muted">
                 {query
                   ? "Try a different search term."
-                  : "Create your first document to get started."}
+                  : view === "trash"
+                    ? "Deleted documents will appear here."
+                    : "Create your first document to get started."}
               </p>
-              {!query && (
+              {!query && view === "all" && (
                 <button
                   onClick={handleNew}
                   disabled={creating}
@@ -145,6 +208,19 @@ export default function Home() {
                   New document
                 </button>
               )}
+            </div>
+          ) : view === "trash" ? (
+            <div className="mt-6 space-y-3">
+              <AnimatePresence>
+                {filtered.map((doc) => (
+                  <TrashItem
+                    key={doc.id}
+                    doc={doc}
+                    onRestore={() => handleRestore(doc.id)}
+                    onDestroy={() => handleDestroy(doc.id)}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
