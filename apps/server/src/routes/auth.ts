@@ -11,6 +11,7 @@ import {
   sessionCookieOptions,
 } from "../auth/session.js";
 import { getGoogle, getGitHub, oauthCookieOptions } from "../auth/oauth.js";
+import { createDefaultWorkspace } from "../workspace.js";
 
 const WEB_ORIGIN = process.env.WEB_ORIGIN ?? "http://localhost:5173";
 
@@ -54,7 +55,7 @@ async function upsertOAuthUser(
     return existing;
   }
 
-  return prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       name,
@@ -62,6 +63,8 @@ async function upsertOAuthUser(
       oauthAccounts: { create: { provider, providerUserId } },
     },
   });
+  await createDefaultWorkspace(user.id, user.name);
+  return user;
 }
 
 export async function authRoutes(app: FastifyInstance) {
@@ -81,6 +84,7 @@ export async function authRoutes(app: FastifyInstance) {
     const user = await prisma.user.create({
       data: { email, name, passwordHash: await hashPassword(password) },
     });
+    await createDefaultWorkspace(user.id, user.name);
 
     const { token, expiresAt } = await createSession(user.id);
     reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(expiresAt));
