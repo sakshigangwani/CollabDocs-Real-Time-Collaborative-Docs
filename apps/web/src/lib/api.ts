@@ -7,16 +7,24 @@ export type User = {
   avatarUrl: string | null;
 };
 
-async function post(path: string, body: unknown) {
+export type DocumentDTO = {
+  id: string;
+  title: string;
+  icon: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+async function request(method: string, path: string, body?: unknown) {
   const res = await fetch(`${API_URL}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method,
+    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
     credentials: "include",
-    body: JSON.stringify(body),
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-
     throw new Error(data.error ?? "Something went wrong. Please try again.");
   }
   return data;
@@ -24,19 +32,43 @@ async function post(path: string, body: unknown) {
 
 export const api = {
   signup: (body: { email: string; name: string; password: string }) =>
-    post("/api/v1/auth/signup", body) as Promise<{ user: User }>,
+    request("POST", "/api/v1/auth/signup", body) as Promise<{ user: User }>,
 
   login: (body: { email: string; password: string }) =>
-    post("/api/v1/auth/login", body) as Promise<{ user: User }>,
+    request("POST", "/api/v1/auth/login", body) as Promise<{ user: User }>,
 
-  logout: () => post("/api/v1/auth/logout", {}),
+  logout: () => request("POST", "/api/v1/auth/logout", {}),
 
   me: async (): Promise<User | null> => {
-    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-      credentials: "include",
-    });
-    const data = await res.json().catch(() => ({ user: null }));
+    const data = await request("GET", "/api/v1/auth/me");
     return data.user ?? null;
+  },
+
+  documents: {
+    list: async (): Promise<DocumentDTO[]> => {
+      const data = await request("GET", "/api/v1/documents");
+      return data.documents;
+    },
+    create: async (title?: string): Promise<DocumentDTO> => {
+      const data = await request("POST", "/api/v1/documents", title ? { title } : {});
+      return data.document;
+    },
+    rename: async (id: string, title: string): Promise<DocumentDTO> => {
+      const data = await request("PATCH", `/api/v1/documents/${id}`, { title });
+      return data.document;
+    },
+    remove: (id: string) => request("DELETE", `/api/v1/documents/${id}`),
+
+    listTrash: async (): Promise<DocumentDTO[]> => {
+      const data = await request("GET", "/api/v1/documents/trash");
+      return data.documents;
+    },
+    restore: async (id: string): Promise<DocumentDTO> => {
+      const data = await request("POST", `/api/v1/documents/${id}/restore`);
+      return data.document;
+    },
+    destroy: (id: string) =>
+      request("DELETE", `/api/v1/documents/${id}/permanent`),
   },
 };
 

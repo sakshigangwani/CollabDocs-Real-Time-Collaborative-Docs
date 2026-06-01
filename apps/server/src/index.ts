@@ -5,6 +5,7 @@ import type { User } from "@prisma/client";
 import { prisma } from "./db.js";
 import { SESSION_COOKIE, validateSession } from "./auth/session.js";
 import { authRoutes } from "./routes/auth.js";
+import { documentRoutes } from "./routes/documents.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -36,6 +37,7 @@ app.get("/health/db", async () => {
 });
 
 await app.register(authRoutes);
+await app.register(documentRoutes);
 
 const port = Number(process.env.PORT ?? 4000);
 
