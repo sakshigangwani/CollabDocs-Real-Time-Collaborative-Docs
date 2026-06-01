@@ -1,25 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { FileText, Plus, Search, LogOut } from "lucide-react";
 import Sidebar from "../components/Sidebar";
-import DocumentCard, { type Doc } from "../components/DocumentCard";
+import DocumentCard from "../components/DocumentCard";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../auth/AuthContext";
-
-const initialDocs: Doc[] = [
-  { id: "sample-1", title: "Q3 Product Roadmap", updatedLabel: "2 hours ago" },
-  { id: "sample-2", title: "Team Meeting Notes", updatedLabel: "Yesterday" },
-  { id: "sample-3", title: "Design System Guidelines", updatedLabel: "3 days ago" },
-];
-
-let newDocCount = 0;
+import { api, type DocumentDTO } from "../lib/api";
 
 export default function Home() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [docs, setDocs] = useState<Doc[]>(initialDocs);
+  const [docs, setDocs] = useState<DocumentDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState("");
 
   const firstName = (user?.name ?? "My").split(" ")[0];
@@ -27,18 +22,29 @@ export default function Home() {
     d.title.toLowerCase().includes(query.trim().toLowerCase())
   );
 
-  function handleNew() {
-    newDocCount += 1;
-    const doc: Doc = {
-      id: `new-${Date.now()}-${newDocCount}`,
-      title: "Untitled",
-      updatedLabel: "just now",
-    };
-    setDocs((prev) => [doc, ...prev]);
+  useEffect(() => {
+    api.documents
+      .list()
+      .then(setDocs)
+      .catch(() => setDocs([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleNew() {
+    setCreating(true);
+    try {
+      const doc = await api.documents.create();
+      setDocs((prev) => [doc, ...prev]);
+    } finally {
+      setCreating(false);
+    }
   }
 
   function handleDelete(id: string) {
     setDocs((prev) => prev.filter((d) => d.id !== id));
+    api.documents.remove(id).catch(() => {
+      api.documents.list().then(setDocs);
+    });
   }
 
   async function handleLogout() {
@@ -73,16 +79,18 @@ export default function Home() {
             <div>
               <h1 className="text-2xl font-bold tracking-tight">All documents</h1>
               <p className="mt-1 text-sm text-muted">
-                {docs.length} document{docs.length === 1 ? "" : "s"} in{" "}
-                {firstName}'s Workspace
+                {loading
+                  ? "Loading…"
+                  : `${docs.length} document${docs.length === 1 ? "" : "s"} in ${firstName}'s Workspace`}
               </p>
             </div>
             <button
               onClick={handleNew}
-              className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-brand-fg shadow-lg shadow-brand/25 transition-colors hover:bg-brand-hover"
+              disabled={creating}
+              className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-brand-fg shadow-lg shadow-brand/25 transition-colors hover:bg-brand-hover disabled:opacity-60"
             >
               <Plus size={18} />
-              New document
+              {creating ? "Creating…" : "New document"}
             </button>
           </div>
 
@@ -99,7 +107,22 @@ export default function Home() {
             />
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-xl border border-border bg-surface"
+                >
+                  <div className="h-28 animate-pulse bg-surface-muted" />
+                  <div className="space-y-2 p-4">
+                    <div className="h-3.5 w-2/3 animate-pulse rounded bg-surface-muted" />
+                    <div className="h-3 w-1/3 animate-pulse rounded bg-surface-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
                 <FileText size={26} />
@@ -115,7 +138,8 @@ export default function Home() {
               {!query && (
                 <button
                   onClick={handleNew}
-                  className="mt-5 flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-brand-fg transition-colors hover:bg-brand-hover"
+                  disabled={creating}
+                  className="mt-5 flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-brand-fg transition-colors hover:bg-brand-hover disabled:opacity-60"
                 >
                   <Plus size={18} />
                   New document

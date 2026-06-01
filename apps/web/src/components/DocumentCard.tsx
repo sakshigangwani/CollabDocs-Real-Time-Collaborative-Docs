@@ -4,7 +4,7 @@ import { FileText, Trash2 } from "lucide-react";
 export type Doc = {
   id: string;
   title: string;
-  updatedLabel: string;
+  updatedAt: string;
 };
 
 const gradients = [
@@ -20,6 +20,18 @@ function gradientFor(id: string) {
   let sum = 0;
   for (const ch of id) sum += ch.charCodeAt(0);
   return gradients[sum % gradients.length];
+}
+
+function relativeTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+  return new Date(iso).toLocaleDateString();
 }
 
 export default function DocumentCard({
@@ -49,7 +61,9 @@ export default function DocumentCard({
 
       <div className="p-4">
         <h3 className="truncate font-medium">{doc.title}</h3>
-        <p className="mt-0.5 text-xs text-muted">Edited {doc.updatedLabel}</p>
+        <p className="mt-0.5 text-xs text-muted">
+          Edited {relativeTime(doc.updatedAt)}
+        </p>
       </div>
 
       <button
