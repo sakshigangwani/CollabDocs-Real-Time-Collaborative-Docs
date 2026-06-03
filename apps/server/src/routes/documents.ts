@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import type { Document, User } from "@prisma/client";
 import { prisma } from "../db.js";
 import { createDefaultWorkspace } from "../workspace.js";
@@ -15,6 +16,10 @@ function publicDoc(doc: Document) {
   };
 }
 
+function fullDoc(doc: Document) {
+  return { ...publicDoc(doc), content: doc.content };
+}
+
 async function getWorkspaceId(user: User) {
   const membership = await prisma.workspaceMember.findFirst({
     where: { userId: user.id },
@@ -26,7 +31,10 @@ async function getWorkspaceId(user: User) {
   return workspace.id;
 }
 
-const titleSchema = z.object({ title: z.string().min(1).max(200) });
+const updateSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  content: z.any().optional(),
+});
 
 export async function documentRoutes(app: FastifyInstance) {
   app.get("/api/v1/documents", async (req, reply) => {
@@ -39,6 +47,20 @@ export async function documentRoutes(app: FastifyInstance) {
       orderBy: { updatedAt: "desc" },
     });
     return { documents: docs.map(publicDoc) };
+  });
+
+  app.get("/api/v1/documents/:id", async (req, reply) => {
+    const user = req.user;
+    if (!user) return reply.code(401).send({ error: "Not signed in." });
+
+    const { id } = req.params as { id: string };
+    const workspaceId = await getWorkspaceId(user);
+    const doc = await prisma.document.findFirst({
+      where: { id, workspaceId, deletedAt: null },
+    });
+    if (!doc) return reply.code(404).send({ error: "Document not found." });
+
+    return { document: fullDoc(doc) };
   });
 
   app.post("/api/v1/documents", async (req, reply) => {
@@ -70,9 +92,9 @@ export async function documentRoutes(app: FastifyInstance) {
     const user = req.user;
     if (!user) return reply.code(401).send({ error: "Not signed in." });
 
-    const parsed = titleSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return reply.code(400).send({ error: "A valid title is required." });
+    const parsed = updateSchema.safeParse(req.body);
+    if (!parsed.success || (parsed.data.title === undefined && parsed.data.content === undefined)) {
+      return reply.code(400).send({ error: "Nothing to update." });
     }
 
     const { id } = req.params as { id: string };
@@ -82,11 +104,14 @@ export async function documentRoutes(app: FastifyInstance) {
     });
     if (!existing) return reply.code(404).send({ error: "Document not found." });
 
-    const doc = await prisma.document.update({
-      where: { id },
-      data: { title: parsed.data.title.trim() },
-    });
-    return { document: publicDoc(doc) };
+    const data: Prisma.DocumentUpdateInput = {};
+    if (parsed.data.title !== undefined) data.title = parsed.data.title.trim();
+    if (parsed.data.content !== undefined) {
+      data.content = parsed.data.content as Prisma.InputJsonValue;
+    }
+
+    const doc = await prisma.document.update({ where: { id }, data });
+    return { document: fullDoc(doc) };
   });
 
   app.delete("/api/v1/documents/:id", async (req, reply) => {

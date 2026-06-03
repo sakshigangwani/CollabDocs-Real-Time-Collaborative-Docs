@@ -96,6 +96,7 @@ model Document {
   title          String    @default("Untitled")
   icon           String?
   coverUrl       String?
+  content        Json?
   createdById    String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
