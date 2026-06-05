@@ -229,7 +229,7 @@ export default function Home() {
                   <DocumentCard
                     key={doc.id}
                     doc={doc}
-                    onOpen={() => {}}
+                    onOpen={() => navigate(`/d/${doc.id}`)}
                     onDelete={() => handleDelete(doc.id)}
                   />
                 ))}

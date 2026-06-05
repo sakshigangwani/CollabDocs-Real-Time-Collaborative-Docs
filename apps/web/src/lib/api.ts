@@ -16,6 +16,8 @@ export type DocumentDTO = {
   deletedAt: string | null;
 };
 
+export type FullDocument = DocumentDTO & { content: unknown };
+
 async function request(method: string, path: string, body?: unknown) {
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -51,6 +53,17 @@ export const api = {
     },
     create: async (title?: string): Promise<DocumentDTO> => {
       const data = await request("POST", "/api/v1/documents", title ? { title } : {});
+      return data.document;
+    },
+    get: async (id: string): Promise<FullDocument> => {
+      const data = await request("GET", `/api/v1/documents/${id}`);
+      return data.document;
+    },
+    update: async (
+      id: string,
+      patch: { title?: string; content?: unknown }
+    ): Promise<FullDocument> => {
+      const data = await request("PATCH", `/api/v1/documents/${id}`, patch);
       return data.document;
     },
     rename: async (id: string, title: string): Promise<DocumentDTO> => {
