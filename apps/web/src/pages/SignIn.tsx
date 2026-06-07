@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import AuthCard from "../components/AuthCard";
 import OAuthButtons from "../components/OAuthButtons";
 import Field from "../components/Field";
@@ -8,6 +8,8 @@ import { api } from "../lib/api";
 
 export default function SignIn() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get("next");
   const { setUser } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -22,7 +24,7 @@ export default function SignIn() {
     try {
       const { user } = await api.login({ email, password });
       setUser(user);
-      navigate("/home");
+      navigate(next && next.startsWith("/") ? next : "/home");
     } catch (err) {
       setError((err as Error).message);
     } finally {

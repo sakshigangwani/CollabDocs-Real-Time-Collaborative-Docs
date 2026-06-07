@@ -128,3 +128,143 @@
     animation: none;
   }
 }
+
+.prose-doc .ProseMirror {
+  outline: none;
+  min-height: 60vh;
+  line-height: 1.7;
+}
+.prose-doc .ProseMirror > * + * {
+  margin-top: 0.75em;
+}
+.prose-doc .ProseMirror h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 1.2em;
+}
+.prose-doc .ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1em;
+}
+.prose-doc .ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1em;
+}
+.prose-doc .ProseMirror ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.prose-doc .ProseMirror ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.prose-doc .ProseMirror li {
+  margin: 0.2em 0;
+}
+.prose-doc .ProseMirror blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+}
+.prose-doc .ProseMirror code {
+  background: var(--surface-muted);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.prose-doc .ProseMirror pre {
+  background: var(--surface-muted);
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  overflow-x: auto;
+}
+.prose-doc .ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+.prose-doc .ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.2em 0;
+}
+.prose-doc .ProseMirror a {
+  color: var(--brand);
+  text-decoration: underline;
+}
+.prose-doc .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.prose-doc .ProseMirror mark {
+  border-radius: 3px;
+  padding: 0.05em 0.2em;
+  color: #0f172a;
+}
+
+.prose-doc .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+.prose-doc .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.2em 0;
+}
+.prose-doc .ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 0.25rem;
+  user-select: none;
+}
+.prose-doc .ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+.prose-doc .ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--brand);
+}
+
+.prose-doc .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.6em 0;
+  position: relative;
+}
+.prose-doc .ProseMirror td,
+.prose-doc .ProseMirror th {
+  border: 1px solid var(--border);
+  padding: 0.5em 0.7em;
+  vertical-align: top;
+  position: relative;
+  min-width: 3em;
+}
+.prose-doc .ProseMirror th {
+  background: var(--surface-muted);
+  font-weight: 600;
+  text-align: left;
+}
+.prose-doc .ProseMirror .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+  pointer-events: none;
+}
+.prose-doc .ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--brand);
+  cursor: col-resize;
+}

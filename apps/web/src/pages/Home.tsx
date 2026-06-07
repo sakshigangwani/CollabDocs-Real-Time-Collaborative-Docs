@@ -30,16 +30,22 @@ export default function Home() {
   const filtered = items.filter((d) =>
     d.title.toLowerCase().includes(query.trim().toLowerCase())
   );
-  const searchable = view === "all" || view === "trash";
+  const searchable = view === "all" || view === "trash" || view === "shared";
 
   useEffect(() => {
     setQuery("");
-    if (view === "all" || view === "trash") {
+    if (view === "all" || view === "trash" || view === "shared") {
       setLoading(true);
       const load =
         view === "trash" ? api.documents.listTrash() : api.documents.list();
       load
-        .then(setItems)
+        .then((docs) =>
+          setItems(
+            view === "shared"
+              ? docs.filter((d) => d.role && d.role !== "OWNER")
+              : docs
+          )
+        )
         .catch(() => setItems([]))
         .finally(() => setLoading(false));
     } else {
@@ -91,6 +97,8 @@ export default function Home() {
     if (loading) return "Loading…";
     if (view === "all")
       return `${items.length} document${items.length === 1 ? "" : "s"} in ${firstName}'s Workspace`;
+    if (view === "shared")
+      return `${items.length} document${items.length === 1 ? "" : "s"} shared with you`;
     if (view === "trash")
       return `${items.length} item${items.length === 1 ? "" : "s"} in trash`;
     return "Coming soon";
@@ -172,7 +180,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : view === "shared" || view === "favorites" ? (
+          ) : view === "favorites" ? (
             <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
               <h2 className="font-semibold">Coming soon</h2>
               <p className="mt-1 max-w-xs text-sm text-muted">
@@ -189,14 +197,18 @@ export default function Home() {
                   ? "Nothing found"
                   : view === "trash"
                     ? "Trash is empty"
-                    : "No documents yet"}
+                    : view === "shared"
+                      ? "Nothing shared yet"
+                      : "No documents yet"}
               </h2>
               <p className="mt-1 max-w-xs text-sm text-muted">
                 {query
                   ? "Try a different search term."
                   : view === "trash"
                     ? "Deleted documents will appear here."
-                    : "Create your first document to get started."}
+                    : view === "shared"
+                      ? "Documents others share with you will appear here."
+                      : "Create your first document to get started."}
               </p>
               {!query && view === "all" && (
                 <button
@@ -229,7 +241,7 @@ export default function Home() {
                   <DocumentCard
                     key={doc.id}
                     doc={doc}
-                    onOpen={() => {}}
+                    onOpen={() => navigate(`/d/${doc.id}`)}
                     onDelete={() => handleDelete(doc.id)}
                   />
                 ))}

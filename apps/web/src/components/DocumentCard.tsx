@@ -1,10 +1,19 @@
 import { motion } from "framer-motion";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2, Users } from "lucide-react";
+import type { DocRole } from "../lib/api";
 
 export type Doc = {
   id: string;
   title: string;
   updatedAt: string;
+  role?: DocRole;
+};
+
+const ROLE_LABEL: Record<DocRole, string> = {
+  OWNER: "Owner",
+  EDITOR: "Editor",
+  COMMENTER: "Commenter",
+  VIEWER: "Viewer",
 };
 
 const gradients = [
@@ -43,6 +52,7 @@ export default function DocumentCard({
   onOpen: () => void;
   onDelete: () => void;
 }) {
+  const isShared = doc.role !== undefined && doc.role !== "OWNER";
   return (
     <motion.div
       layout
@@ -61,21 +71,29 @@ export default function DocumentCard({
 
       <div className="p-4">
         <h3 className="truncate font-medium">{doc.title}</h3>
-        <p className="mt-0.5 text-xs text-muted">
+        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
           Edited {relativeTime(doc.updatedAt)}
+          {isShared && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-1.5 py-0.5 font-medium">
+              <Users size={11} />
+              {ROLE_LABEL[doc.role!]}
+            </span>
+          )}
         </p>
       </div>
 
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        aria-label="Delete document"
-        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-black/25 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/45 group-hover:opacity-100"
-      >
-        <Trash2 size={15} />
-      </button>
+      {!isShared && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          aria-label="Delete document"
+          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-black/25 text-white opacity-0 backdrop-blur transition-opacity hover:bg-black/45 group-hover:opacity-100"
+        >
+          <Trash2 size={15} />
+        </button>
+      )}
     </motion.div>
   );
 }
