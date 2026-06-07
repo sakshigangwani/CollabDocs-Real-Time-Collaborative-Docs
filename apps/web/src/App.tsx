@@ -6,6 +6,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Home from "./pages/Home";
 import Editor from "./pages/Editor";
+import SharedLink from "./pages/SharedLink";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -37,6 +38,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/shared/:token" element={<SharedLink />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -30,9 +30,26 @@ import {
   Highlighter,
   Check,
   Loader2,
+  Share2,
+  Eye,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
-import { api, type FullDocument } from "../lib/api";
+import ShareDialog from "./ShareDialog";
+import { api, type DocRole, type FullDocument } from "../lib/api";
+
+const ROLE_RANK: Record<DocRole, number> = {
+  VIEWER: 1,
+  COMMENTER: 2,
+  EDITOR: 3,
+  OWNER: 4,
+};
+
+const ROLE_LABEL: Record<DocRole, string> = {
+  OWNER: "Owner",
+  EDITOR: "Editor",
+  COMMENTER: "Commenter",
+  VIEWER: "Viewer",
+};
 
 type SaveState = "saved" | "saving" | "error";
 
@@ -332,9 +349,13 @@ function SaveBadge({ state }: { state: SaveState }) {
 
 export default function DocEditor({ doc }: { doc: FullDocument }) {
   const navigate = useNavigate();
+  const role = doc.role ?? "VIEWER";
+  const canEdit = ROLE_RANK[role] >= ROLE_RANK.EDITOR;
+  const isOwner = role === "OWNER";
   const [title, setTitle] = useState(doc.title);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [wordCount, setWordCount] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const pending = useRef<{ title?: string; content?: unknown }>({});
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -357,10 +378,13 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
   }
 
   const editor = useEditor({
+    editable: canEdit,
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: "Type '/' for commands, or just start writing…",
+        placeholder: canEdit
+          ? "Type '/' for commands, or just start writing…"
+          : "",
       }),
       TextStyle,
       Color,
@@ -373,6 +397,7 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
     content: (doc.content as object | null) ?? undefined,
     onCreate: ({ editor }) => setWordCount(countWords(editor.getText())),
     onUpdate: ({ editor }) => {
+      if (!canEdit) return;
       queueSave({ content: editor.getJSON() });
       setWordCount(countWords(editor.getText()));
     },
@@ -386,6 +411,7 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
   }, []);
 
   function onTitleChange(value: string) {
+    if (!canEdit) return;
     setTitle(value);
     queueSave({ title: value.trim() || "Untitled" });
   }
@@ -418,14 +444,34 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
             <span className="hidden text-xs text-muted sm:block">
               {wordCount} {wordCount === 1 ? "word" : "words"}
             </span>
-            <SaveBadge state={saveState} />
+            {canEdit ? (
+              <SaveBadge state={saveState} />
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs text-muted">
+                <Eye size={12} />
+                {ROLE_LABEL[role]}
+              </span>
+            )}
+            {isOwner && (
+              <button
+                onClick={() => setShareOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-brand-fg transition-colors hover:bg-brand-hover"
+              >
+                <Share2 size={14} />
+                Share
+              </button>
+            )}
             <ThemeToggle />
           </div>
         </div>
       </header>
 
-      {editor && <Toolbar editor={editor} />}
-      {editor && <SelectionMenu editor={editor} />}
+      {editor && canEdit && <Toolbar editor={editor} />}
+      {editor && canEdit && <SelectionMenu editor={editor} />}
+
+      {shareOpen && (
+        <ShareDialog docId={doc.id} docTitle={title} onClose={() => setShareOpen(false)} />
+      )}
 
       <div className="relative mx-auto max-w-5xl px-4 pb-32 pt-6">
         <div className="pointer-events-none absolute -top-2 left-1/2 -z-0 h-40 w-2/3 -translate-x-1/2 rounded-full bg-gradient-to-r from-brand/15 to-accent/15 blur-3xl" />
@@ -440,6 +486,7 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
             <input
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
+              readOnly={!canEdit}
               placeholder="Untitled"
               className="mt-5 w-full bg-transparent text-4xl font-bold tracking-tight outline-none placeholder:text-muted/40"
             />

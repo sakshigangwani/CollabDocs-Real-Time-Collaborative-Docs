@@ -105,11 +105,12 @@ model Document {
   snapshotKey     String?
   snapshotVersion Int     @default(0)
 
-  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  parent    Document?     @relation("Folder", fields: [parentFolderId], references: [id])
-  children  Document[]    @relation("Folder")
-  createdBy User          @relation("DocCreator", fields: [createdById], references: [id])
-  acl       DocumentAcl[]
+  workspace  Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parent     Document?     @relation("Folder", fields: [parentFolderId], references: [id])
+  children   Document[]    @relation("Folder")
+  createdBy  User          @relation("DocCreator", fields: [createdById], references: [id])
+  acl        DocumentAcl[]
+  shareLinks ShareLink[]
 
   @@index([workspaceId, updatedAt])
 }
@@ -126,4 +127,38 @@ model DocumentAcl {
 
   @@index([documentId])
   @@index([principalId])
+}
+
+enum ShareScope {
+  ANYONE
+  WORKSPACE
+}
+
+model ShareLink {
+  id           String     @id @default(uuid())
+  documentId   String
+  token        String     @unique
+  role         DocRole    @default(VIEWER)
+  scope        ShareScope @default(ANYONE)
+  passwordHash String?
+  expiresAt    DateTime?
+  createdById  String
+  createdAt    DateTime   @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  documentId String?
+  actorId    String
+  action     String
+  targetType String?
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([documentId, createdAt])
 }
