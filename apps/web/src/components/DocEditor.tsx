@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
@@ -9,7 +9,20 @@ import Highlight from "@tiptap/extension-highlight";
 import { TableKit } from "@tiptap/extension-table";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCaret from "@tiptap/extension-collaboration-caret";
+import * as Y from "yjs";
+import { IndexeddbPersistence } from "y-indexeddb";
+import { HocuspocusProvider } from "@hocuspocus/provider";
 import { SlashCommand } from "./editor/SlashCommand";
+import {
+  CommentHighlight,
+  applyCommentRanges,
+  type CommentRange,
+} from "./editor/CommentHighlight";
+import CommentsDrawer from "./comments/CommentsDrawer";
+import NotificationBell from "./NotificationBell";
+import { anchorToRange, selectionToAnchor, type Anchor } from "../lib/anchors";
 import {
   ArrowLeft,
   ChevronRight,
@@ -28,14 +41,39 @@ import {
   Quote,
   Baseline,
   Highlighter,
-  Check,
   Loader2,
   Share2,
   Eye,
+  MessageSquare,
+  MessageSquarePlus,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ShareDialog from "./ShareDialog";
-import { api, type DocRole, type FullDocument } from "../lib/api";
+import {
+  PresenceStack,
+  SyncBadge,
+  ConnectionBanner,
+  FollowingBanner,
+} from "./Presence";
+import {
+  api,
+  COLLAB_URL,
+  type CollabToken,
+  type CommentDTO,
+  type DocRole,
+  type FullDocument,
+} from "../lib/api";
+import {
+  computeStatus,
+  type ConnStatus,
+  type Peer,
+} from "../lib/collab";
+
+type CollabSession = {
+  ydoc: Y.Doc;
+  persistence: IndexeddbPersistence;
+  provider: HocuspocusProvider;
+};
 
 const ROLE_RANK: Record<DocRole, number> = {
   VIEWER: 1,
@@ -50,8 +88,6 @@ const ROLE_LABEL: Record<DocRole, string> = {
   COMMENTER: "Commenter",
   VIEWER: "Viewer",
 };
-
-type SaveState = "saved" | "saving" | "error";
 
 const TEXT_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6", "#3b82f6",
@@ -281,106 +317,192 @@ function Toolbar({ editor }: { editor: Editor }) {
   );
 }
 
-function SelectionMenu({ editor }: { editor: Editor }) {
+function SelectionMenu({
+  editor,
+  canEdit,
+  canComment,
+  onComment,
+}: {
+  editor: Editor;
+  canEdit: boolean;
+  canComment: boolean;
+  onComment: () => void;
+}) {
   return (
-    <BubbleMenu editor={editor}>
+    <BubbleMenu editor={editor} shouldShow={({ from, to }) => from !== to}>
       <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface p-1 shadow-xl">
-        <ToolbarButton
-          label="Bold"
-          active={editor.isActive("bold")}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          <Bold size={15} />
-        </ToolbarButton>
-        <ToolbarButton
-          label="Italic"
-          active={editor.isActive("italic")}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <Italic size={15} />
-        </ToolbarButton>
-        <ToolbarButton
-          label="Underline"
-          active={editor.isActive("underline")}
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          <UnderlineIcon size={15} />
-        </ToolbarButton>
-        <ToolbarButton
-          label="Strikethrough"
-          active={editor.isActive("strike")}
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-        >
-          <Strikethrough size={15} />
-        </ToolbarButton>
-        <ToolbarButton
-          label="Inline code"
-          active={editor.isActive("code")}
-          onClick={() => editor.chain().focus().toggleCode().run()}
-        >
-          <Code size={15} />
-        </ToolbarButton>
+        {canEdit && (
+          <>
+            <ToolbarButton
+              label="Bold"
+              active={editor.isActive("bold")}
+              onClick={() => editor.chain().focus().toggleBold().run()}
+            >
+              <Bold size={15} />
+            </ToolbarButton>
+            <ToolbarButton
+              label="Italic"
+              active={editor.isActive("italic")}
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+            >
+              <Italic size={15} />
+            </ToolbarButton>
+            <ToolbarButton
+              label="Underline"
+              active={editor.isActive("underline")}
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+            >
+              <UnderlineIcon size={15} />
+            </ToolbarButton>
+            <ToolbarButton
+              label="Strikethrough"
+              active={editor.isActive("strike")}
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+            >
+              <Strikethrough size={15} />
+            </ToolbarButton>
+            <ToolbarButton
+              label="Inline code"
+              active={editor.isActive("code")}
+              onClick={() => editor.chain().focus().toggleCode().run()}
+            >
+              <Code size={15} />
+            </ToolbarButton>
+          </>
+        )}
+        {canComment && (
+          <>
+            {canEdit && <Divider />}
+            <ToolbarButton label="Comment" onClick={onComment}>
+              <MessageSquarePlus size={15} />
+            </ToolbarButton>
+          </>
+        )}
       </div>
     </BubbleMenu>
   );
 }
 
-function SaveBadge({ state }: { state: SaveState }) {
-  if (state === "saving")
+export default function DocEditor({ doc }: { doc: FullDocument }) {
+  const navigate = useNavigate();
+  const [auth, setAuth] = useState<CollabToken | null>(null);
+  const [authError, setAuthError] = useState(false);
+  const [session, setSession] = useState<CollabSession | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setAuth(null);
+    setAuthError(false);
+    api.documents
+      .collabToken(doc.id)
+      .then((t) => active && setAuth(t))
+      .catch(() => active && setAuthError(true));
+    return () => {
+      active = false;
+    };
+  }, [doc.id]);
+
+  useEffect(() => {
+    if (!auth) return;
+    const ydoc = new Y.Doc();
+    const persistence = new IndexeddbPersistence(`collabdocs-${doc.id}`, ydoc);
+    const provider = new HocuspocusProvider({
+      url: COLLAB_URL,
+      name: doc.id,
+      document: ydoc,
+      token: auth.token,
+    });
+    setSession({ ydoc, persistence, provider });
+    return () => {
+      provider.destroy();
+      persistence.destroy();
+      ydoc.destroy();
+      setSession(null);
+    };
+  }, [auth, doc.id]);
+
+  if (authError) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs text-muted">
-        <Loader2 size={12} className="animate-spin" />
-        Saving…
-      </span>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-canvas text-center">
+        <h1 className="text-xl font-semibold">Can't open this document</h1>
+        <p className="text-sm text-muted">
+          The collaboration session couldn't start. Your access may have changed.
+        </p>
+        <button
+          onClick={() => navigate("/home")}
+          className="mt-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-fg transition-colors hover:bg-brand-hover"
+        >
+          Back to documents
+        </button>
+      </div>
     );
-  if (state === "error")
+  }
+
+  if (!auth || !session) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-2.5 py-1 text-xs text-danger">
-        Save failed
-      </span>
+      <div className="flex min-h-screen items-center justify-center bg-canvas text-muted">
+        <Loader2 size={22} className="animate-spin" />
+      </div>
     );
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs text-success">
-      <Check size={12} />
-      Saved
-    </span>
-  );
+  }
+
+  return <CollabEditor key={doc.id} doc={doc} auth={auth} session={session} />;
 }
 
-export default function DocEditor({ doc }: { doc: FullDocument }) {
+function CollabEditor({
+  doc,
+  auth,
+  session,
+}: {
+  doc: FullDocument;
+  auth: CollabToken;
+  session: CollabSession;
+}) {
   const navigate = useNavigate();
   const role = doc.role ?? "VIEWER";
   const canEdit = ROLE_RANK[role] >= ROLE_RANK.EDITOR;
+  const canComment = ROLE_RANK[role] >= ROLE_RANK.COMMENTER;
   const isOwner = role === "OWNER";
+
   const [title, setTitle] = useState(doc.title);
-  const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [titleSaving, setTitleSaving] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
+  const [status, setStatus] = useState<ConnStatus>("connecting");
+  const [peers, setPeers] = useState<Peer[]>([]);
+  const [followClientId, setFollowClientId] = useState<number | null>(null);
 
-  const pending = useRef<{ title?: string; content?: unknown }>({});
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [comments, setComments] = useState<CommentDTO[]>([]);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [pendingAnchor, setPendingAnchor] = useState<Anchor | null>(null);
+  const activateRef = useRef<(id: string) => void>(() => {});
 
-  function flush() {
-    const patch = pending.current;
-    pending.current = {};
-    if (Object.keys(patch).length === 0) return;
-    api.documents
-      .update(doc.id, patch)
-      .then(() => setSaveState("saved"))
-      .catch(() => setSaveState("error"));
+  const openCount = comments.filter((c) => !c.resolved).length;
+
+  const titleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastActiveSent = useRef(0);
+
+  function markTyping() {
+    session.provider.awareness?.setLocalStateField("typing", true);
+    clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => {
+      session.provider.awareness?.setLocalStateField("typing", false);
+    }, 1500);
   }
 
-  function queueSave(patch: { title?: string; content?: unknown }) {
-    pending.current = { ...pending.current, ...patch };
-    setSaveState("saving");
-    clearTimeout(timer.current);
-    timer.current = setTimeout(flush, 800);
+  function markActivity() {
+    const now = Date.now();
+    if (now - lastActiveSent.current < 5000) return;
+    lastActiveSent.current = now;
+    session.provider.awareness?.setLocalStateField("lastActive", now);
   }
 
   const editor = useEditor({
     editable: canEdit,
     extensions: [
-      StarterKit,
+      StarterKit.configure({ undoRedo: false }),
       Placeholder.configure({
         placeholder: canEdit
           ? "Type '/' for commands, or just start writing…"
@@ -393,28 +515,201 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
       TaskList,
       TaskItem.configure({ nested: true }),
       SlashCommand,
+      CommentHighlight.configure({
+        onActivate: (id) => activateRef.current(id),
+      }),
+      Collaboration.configure({ document: session.ydoc }),
+      CollaborationCaret.configure({
+        provider: session.provider,
+        user: { name: auth.user.name, color: auth.color, id: auth.user.id },
+      }),
     ],
-    content: (doc.content as object | null) ?? undefined,
     onCreate: ({ editor }) => setWordCount(countWords(editor.getText())),
     onUpdate: ({ editor }) => {
-      if (!canEdit) return;
-      queueSave({ content: editor.getJSON() });
       setWordCount(countWords(editor.getText()));
+      if (!canEdit) return;
+      markActivity();
+      markTyping();
     },
-  });
+  }, [session]);
 
   useEffect(() => {
-    return () => {
-      clearTimeout(timer.current);
-      flush();
+    const { provider } = session;
+    const onStatus = (e: { status: string }) =>
+      setStatus(e.status as ConnStatus);
+    const onAuthFail = () => setStatus("error");
+    provider.on("status", onStatus);
+    provider.on("authenticationFailed", onAuthFail);
+
+    const refresh = () => {
+      const states = provider.awareness?.getStates() ?? new Map();
+      const myId = provider.awareness?.clientID;
+      const now = Date.now();
+      const list: Peer[] = [];
+      states.forEach((state, clientId) => {
+        if (clientId === myId) return;
+        const u = state.user as
+          | { id?: string; name?: string; color?: string }
+          | undefined;
+        if (!u) return;
+        list.push({
+          clientId,
+          userId: u.id,
+          name: u.name ?? "Anonymous",
+          color: u.color ?? "#888888",
+          status: computeStatus(state.lastActive as number | undefined, now),
+          typing: Boolean(state.typing),
+        });
+      });
+      setPeers(list);
     };
+
+    provider.awareness?.on("change", refresh);
+    const interval = setInterval(refresh, 15000);
+    refresh();
+    markActivity();
+
+    return () => {
+      provider.off("status", onStatus);
+      provider.off("authenticationFailed", onAuthFail);
+      provider.awareness?.off("change", refresh);
+      clearInterval(interval);
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (!editor || !canEdit) return;
+    const initialContent = doc.content as object | null;
+    const seed = () => {
+      const meta = session.ydoc.getMap("meta");
+      if (meta.get("seeded")) return;
+      if (editor.isEmpty && initialContent) {
+        editor.commands.setContent(initialContent);
+      }
+      meta.set("seeded", true);
+    };
+    if (session.provider.isSynced) seed();
+    else session.provider.on("synced", seed);
+    return () => {
+      session.provider.off("synced", seed);
+    };
+  }, [editor, session]);
+
+  useEffect(() => {
+    if (followClientId == null) return;
+    const peer = peers.find((p) => p.clientId === followClientId);
+    if (!peer) {
+      setFollowClientId(null);
+      return;
+    }
+    const labels = document.querySelectorAll<HTMLElement>(
+      ".collaboration-carets__label"
+    );
+    for (const label of labels) {
+      if (label.textContent === peer.name) {
+        label.scrollIntoView({ block: "center", behavior: "smooth" });
+        break;
+      }
+    }
+  }, [followClientId, peers]);
+
+  const loadComments = useCallback(async () => {
+    try {
+      setComments(await api.comments.list(doc.id));
+    } catch {
+      // ignore — access may have changed
+    }
+  }, [doc.id]);
+
+  useEffect(() => {
+    loadComments();
+    const interval = setInterval(loadComments, 15000);
+    return () => clearInterval(interval);
+  }, [loadComments]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const compute = () => {
+      const ranges: CommentRange[] = [];
+      for (const thread of comments) {
+        if (thread.resolved) continue;
+        const range = anchorToRange(editor, thread.anchorStart, thread.anchorEnd);
+        if (range) {
+          ranges.push({
+            id: thread.id,
+            from: range.from,
+            to: range.to,
+            resolved: thread.resolved,
+            active: thread.id === activeCommentId,
+          });
+        }
+      }
+      applyCommentRanges(editor, ranges);
+    };
+    compute();
+    editor.on("update", compute);
+    return () => {
+      editor.off("update", compute);
+    };
+  }, [editor, comments, activeCommentId]);
+
+  function scrollToComment(id: string) {
+    if (!editor) return;
+    const thread = comments.find((t) => t.id === id);
+    if (!thread) return;
+    const range = anchorToRange(editor, thread.anchorStart, thread.anchorEnd);
+    if (!range) return;
+    try {
+      const coords = editor.view.coordsAtPos(range.from);
+      window.scrollTo({ top: window.scrollY + coords.top - 140, behavior: "smooth" });
+    } catch {
+      // position not resolvable yet
+    }
+  }
+
+  activateRef.current = (id: string) => {
+    setActiveCommentId(id);
+    setDrawerOpen(true);
+    scrollToComment(id);
+  };
+
+  function startComment() {
+    if (!editor) return;
+    const anchor = selectionToAnchor(editor);
+    if (!anchor) return;
+    setPendingAnchor(anchor);
+    setActiveCommentId(null);
+    setDrawerOpen(true);
+  }
+
+  async function createComment(body: string) {
+    if (!pendingAnchor) return;
+    await api.comments.create(doc.id, { body, ...pendingAnchor });
+    setPendingAnchor(null);
+    await loadComments();
+  }
+
+  useEffect(() => {
+    return () => clearTimeout(titleTimer.current);
   }, []);
 
   function onTitleChange(value: string) {
     if (!canEdit) return;
     setTitle(value);
-    queueSave({ title: value.trim() || "Untitled" });
+    setTitleSaving(true);
+    clearTimeout(titleTimer.current);
+    titleTimer.current = setTimeout(() => {
+      api.documents
+        .rename(doc.id, value.trim() || "Untitled")
+        .catch(() => {})
+        .finally(() => setTitleSaving(false));
+    }, 800);
   }
+
+  const followedPeer =
+    followClientId != null
+      ? peers.find((p) => p.clientId === followClientId)
+      : undefined;
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -441,17 +736,47 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
-            <span className="hidden text-xs text-muted sm:block">
-              {wordCount} {wordCount === 1 ? "word" : "words"}
-            </span>
+            <PresenceStack
+              me={{ name: auth.user.name, color: auth.color }}
+              peers={peers}
+              followClientId={followClientId}
+              onFollow={(id) =>
+                setFollowClientId((cur) => (cur === id ? null : id))
+              }
+            />
             {canEdit ? (
-              <SaveBadge state={saveState} />
+              titleSaving ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs text-muted">
+                  <Loader2 size={12} className="animate-spin" />
+                  Saving…
+                </span>
+              ) : (
+                <SyncBadge status={status} />
+              )
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs text-muted">
                 <Eye size={12} />
                 {ROLE_LABEL[role]}
               </span>
             )}
+            <button
+              onClick={() => setDrawerOpen((o) => !o)}
+              aria-label="Comments"
+              className={
+                "relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors " +
+                (drawerOpen
+                  ? "bg-brand/10 text-brand"
+                  : "text-muted hover:bg-surface-muted hover:text-fg")
+              }
+            >
+              <MessageSquare size={18} />
+              {openCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-[10px] font-semibold text-brand-fg">
+                  {openCount > 9 ? "9+" : openCount}
+                </span>
+              )}
+            </button>
+            <NotificationBell />
             {isOwner && (
               <button
                 onClick={() => setShareOpen(true)}
@@ -464,10 +789,40 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
             <ThemeToggle />
           </div>
         </div>
+        <ConnectionBanner status={status} />
+        {followedPeer && (
+          <FollowingBanner
+            name={followedPeer.name}
+            onStop={() => setFollowClientId(null)}
+          />
+        )}
       </header>
 
       {editor && canEdit && <Toolbar editor={editor} />}
-      {editor && canEdit && <SelectionMenu editor={editor} />}
+      {editor && canComment && (
+        <SelectionMenu
+          editor={editor}
+          canEdit={canEdit}
+          canComment={canComment}
+          onComment={startComment}
+        />
+      )}
+
+      <CommentsDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        docId={doc.id}
+        comments={comments}
+        currentUserId={auth.user.id}
+        canComment={canComment}
+        canModerate={isOwner}
+        activeCommentId={activeCommentId}
+        onActivate={(id) => activateRef.current(id)}
+        onChanged={loadComments}
+        pendingQuote={pendingAnchor ? pendingAnchor.quotedText : null}
+        onCreate={createComment}
+        onCancelPending={() => setPendingAnchor(null)}
+      />
 
       {shareOpen && (
         <ShareDialog docId={doc.id} docTitle={title} onClose={() => setShareOpen(false)} />

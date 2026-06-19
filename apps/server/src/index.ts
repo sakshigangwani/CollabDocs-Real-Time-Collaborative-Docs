@@ -7,6 +7,9 @@ import { SESSION_COOKIE, validateSession } from "./auth/session.js";
 import { authRoutes } from "./routes/auth.js";
 import { documentRoutes } from "./routes/documents.js";
 import { shareRoutes } from "./routes/shares.js";
+import { commentRoutes } from "./routes/comments.js";
+import { notificationRoutes } from "./routes/notifications.js";
+import { createCollabServer } from "./collab.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -40,13 +43,30 @@ app.get("/health/db", async () => {
 await app.register(authRoutes);
 await app.register(documentRoutes);
 await app.register(shareRoutes);
+await app.register(commentRoutes);
+await app.register(notificationRoutes);
 
 const port = Number(process.env.PORT ?? 4000);
+const collabPort = Number(process.env.COLLAB_PORT ?? 4001);
+
+const collab = createCollabServer();
 
 try {
   await app.listen({ port, host: "0.0.0.0" });
+  await collab.listen(collabPort);
   console.log(`Server ready at http://localhost:${port}`);
+  console.log(`Collab server ready at ws://localhost:${collabPort}`);
 } catch (err) {
   app.log.error(err);
   process.exit(1);
 }
+
+async function shutdown() {
+  collab.hocuspocus.flushPendingStores();
+  await collab.destroy();
+  await app.close();
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

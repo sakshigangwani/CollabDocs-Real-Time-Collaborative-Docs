@@ -40,6 +40,10 @@ model User {
   createdDocuments Document[]        @relation("DocCreator")
   sessions         Session[]
   oauthAccounts    OAuthAccount[]
+  comments         Comment[]         @relation("CommentAuthor")
+  reactions        CommentReaction[] @relation("ReactionUser")
+  notifications    Notification[]    @relation("NotificationUser")
+  notificationsSent Notification[]   @relation("NotificationActor")
 }
 
 model Session {
@@ -97,6 +101,7 @@ model Document {
   icon           String?
   coverUrl       String?
   content        Json?
+  ydoc           Bytes?
   createdById    String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -111,6 +116,7 @@ model Document {
   createdBy  User          @relation("DocCreator", fields: [createdById], references: [id])
   acl        DocumentAcl[]
   shareLinks ShareLink[]
+  comments   Comment[]
 
   @@index([workspaceId, updatedAt])
 }
@@ -161,4 +167,59 @@ model AuditEvent {
   createdAt  DateTime @default(now())
 
   @@index([documentId, createdAt])
+}
+
+model Comment {
+  id           String    @id @default(uuid())
+  documentId   String
+  parentId     String?
+  authorId     String
+  body         String
+  anchorStart  String?
+  anchorEnd    String?
+  quotedText   String?
+  resolvedAt   DateTime?
+  resolvedById String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  document  Document          @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author    User              @relation("CommentAuthor", fields: [authorId], references: [id])
+  parent    Comment?          @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]         @relation("CommentThread")
+  reactions CommentReaction[]
+
+  @@index([documentId])
+  @@index([parentId])
+}
+
+model CommentReaction {
+  id        String   @id @default(uuid())
+  commentId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation("ReactionUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  userId     String
+  type       String
+  documentId String?
+  commentId  String?
+  actorId    String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  user  User @relation("NotificationUser", fields: [userId], references: [id], onDelete: Cascade)
+  actor User @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
 }

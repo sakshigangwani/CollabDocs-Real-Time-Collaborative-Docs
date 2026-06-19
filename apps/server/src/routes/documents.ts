@@ -10,6 +10,7 @@ import {
   getUserWorkspaceIds,
   roleAtLeast,
 } from "../permissions.js";
+import { colorForUser, mintCollabToken } from "../auth/collab-token.js";
 
 function publicDoc(doc: Document, role?: DocRole | null) {
   return {
@@ -93,6 +94,34 @@ export async function documentRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "Document not found." });
     }
     return { document: fullDoc(doc, role) };
+  });
+
+  app.get("/api/v1/documents/:id/collab-token", async (req, reply) => {
+    const user = req.user;
+    if (!user) return reply.code(401).send({ error: "Not signed in." });
+
+    const { id } = req.params as { id: string };
+    const workspaceIds = await getUserWorkspaceIds(user.id);
+    const doc = await prisma.document.findFirst({
+      where: { id, deletedAt: null },
+      include: { acl: { where: aclPrincipalWhere(user.id, workspaceIds), select: { role: true } } },
+    });
+    if (!doc) return reply.code(404).send({ error: "Document not found." });
+
+    const role = bestRole(doc.acl.map((a) => a.role));
+    if (!roleAtLeast(role, "VIEWER")) {
+      return reply.code(404).send({ error: "Document not found." });
+    }
+
+    const color = colorForUser(user.id);
+    const token = await mintCollabToken({
+      sub: user.id,
+      name: user.name,
+      color,
+      docId: id,
+      role,
+    });
+    return { token, color, user: { id: user.id, name: user.name } };
   });
 
   app.post("/api/v1/documents", async (req, reply) => {

@@ -1,5 +1,14 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
+export const COLLAB_URL =
+  import.meta.env.VITE_COLLAB_URL ?? "ws://localhost:4001";
+
+export type CollabToken = {
+  token: string;
+  color: string;
+  user: { id: string; name: string };
+};
+
 export type User = {
   id: string;
   email: string;
@@ -50,6 +59,60 @@ export type AuditEventDTO = {
   actor: { id: string; name: string; email: string } | null;
 };
 
+export type ReactionDTO = { emoji: string; count: number; reacted: boolean };
+
+export type CommentAuthor = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  color: string;
+};
+
+export type CommentDTO = {
+  id: string;
+  parentId: string | null;
+  body: string;
+  anchorStart: string | null;
+  anchorEnd: string | null;
+  quotedText: string | null;
+  resolved: boolean;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: CommentAuthor;
+  reactions: ReactionDTO[];
+  replies?: CommentDTO[];
+};
+
+export type CommentInput = {
+  body: string;
+  parentId?: string;
+  anchorStart?: string;
+  anchorEnd?: string;
+  quotedText?: string;
+};
+
+export type Mentionable = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  color: string;
+};
+
+export type NotificationDTO = {
+  id: string;
+  type: string;
+  documentId: string | null;
+  documentTitle: string | null;
+  commentId: string | null;
+  snippet: string | null;
+  read: boolean;
+  createdAt: string;
+  actor: { id: string; name: string; email: string; avatarUrl: string | null } | null;
+};
+
 export type SharedLinkInfo = {
   document: { id: string; title: string; icon: string | null };
   role: DocRole;
@@ -98,6 +161,9 @@ export const api = {
     get: async (id: string): Promise<FullDocument> => {
       const data = await request("GET", `/api/v1/documents/${id}`);
       return data.document;
+    },
+    collabToken: async (id: string): Promise<CollabToken> => {
+      return request("GET", `/api/v1/documents/${id}/collab-token`);
     },
     update: async (
       id: string,
@@ -163,6 +229,44 @@ export const api = {
     },
     revoke: (docId: string) =>
       request("DELETE", `/api/v1/documents/${docId}/share-link`),
+  },
+
+  comments: {
+    list: async (docId: string): Promise<CommentDTO[]> => {
+      const data = await request("GET", `/api/v1/documents/${docId}/comments`);
+      return data.comments;
+    },
+    create: async (docId: string, input: CommentInput): Promise<CommentDTO> => {
+      const data = await request("POST", `/api/v1/documents/${docId}/comments`, input);
+      return data.comment;
+    },
+    update: async (
+      docId: string,
+      commentId: string,
+      patch: { body?: string; resolved?: boolean }
+    ): Promise<CommentDTO> => {
+      const data = await request(
+        "PATCH",
+        `/api/v1/documents/${docId}/comments/${commentId}`,
+        patch
+      );
+      return data.comment;
+    },
+    remove: (docId: string, commentId: string) =>
+      request("DELETE", `/api/v1/documents/${docId}/comments/${commentId}`),
+    react: (docId: string, commentId: string, emoji: string) =>
+      request("POST", `/api/v1/documents/${docId}/comments/${commentId}/reactions`, { emoji }),
+    mentionable: async (docId: string): Promise<Mentionable[]> => {
+      const data = await request("GET", `/api/v1/documents/${docId}/mentionable`);
+      return data.users;
+    },
+  },
+
+  notifications: {
+    list: async (): Promise<{ notifications: NotificationDTO[]; unreadCount: number }> =>
+      request("GET", "/api/v1/notifications"),
+    markRead: (ids?: string[]) =>
+      request("POST", "/api/v1/notifications/read", ids ? { ids } : {}),
   },
 
   shared: {

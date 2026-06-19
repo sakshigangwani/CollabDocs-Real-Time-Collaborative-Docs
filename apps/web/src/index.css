@@ -268,3 +268,55 @@
   background: var(--brand);
   cursor: col-resize;
 }
+
+.prose-doc .ProseMirror .collaboration-carets__caret {
+  border-left: 1px solid currentColor;
+  border-right: 1px solid currentColor;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
+  position: relative;
+  word-break: normal;
+}
+.prose-doc .ProseMirror .collaboration-carets__label {
+  border-radius: 3px 3px 3px 0;
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  left: -1px;
+  line-height: normal;
+  padding: 0.1rem 0.35rem;
+  position: absolute;
+  top: -1.5em;
+  user-select: none;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.prose-doc .ProseMirror .collaboration-carets__caret:hover .collaboration-carets__label,
+.prose-doc .ProseMirror:focus-within .collaboration-carets__caret .collaboration-carets__label {
+  opacity: 1;
+}
+
+.prose-doc .ProseMirror .comment-marker {
+  background-color: color-mix(in srgb, var(--warn) 22%, transparent);
+  border-bottom: 2px solid var(--warn);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.prose-doc .ProseMirror .comment-marker:hover {
+  background-color: color-mix(in srgb, var(--warn) 34%, transparent);
+}
+
+.prose-doc .ProseMirror .comment-marker.active {
+  background-color: color-mix(in srgb, var(--warn) 42%, transparent);
+}
+
+.prose-doc .ProseMirror .comment-marker.resolved {
+  background-color: transparent;
+  border-bottom-color: transparent;
+  cursor: default;
+}
