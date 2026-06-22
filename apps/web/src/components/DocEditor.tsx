@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
@@ -46,6 +46,8 @@ import {
   Eye,
   MessageSquare,
   MessageSquarePlus,
+  History as HistoryIcon,
+  Save,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ShareDialog from "./ShareDialog";
@@ -478,6 +480,12 @@ function CollabEditor({
   const [pendingAnchor, setPendingAnchor] = useState<Anchor | null>(null);
   const activateRef = useRef<(id: string) => void>(() => {});
 
+  const [versionFlash, setVersionFlash] = useState(false);
+  const dirtyRef = useRef(false);
+  const restoredRef = useRef(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const restoreId = searchParams.get("restore");
+
   const openCount = comments.filter((c) => !c.resolved).length;
 
   const titleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -530,6 +538,7 @@ function CollabEditor({
       if (!canEdit) return;
       markActivity();
       markTyping();
+      dirtyRef.current = true;
     },
   }, [session]);
 
@@ -690,6 +699,56 @@ function CollabEditor({
   }
 
   useEffect(() => {
+    if (!editor || !canEdit) return;
+    const interval = setInterval(() => {
+      if (!dirtyRef.current) return;
+      dirtyRef.current = false;
+      api.versions
+        .create(doc.id, { kind: "auto", content: editor.getJSON() })
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [editor, canEdit, doc.id]);
+
+  async function saveVersion() {
+    if (!editor) return;
+    const label = window.prompt("Name this version (optional):");
+    if (label === null) return;
+    try {
+      await api.versions.create(doc.id, {
+        kind: "named",
+        label: label.trim() || undefined,
+        content: editor.getJSON(),
+      });
+      dirtyRef.current = false;
+      setVersionFlash(true);
+      setTimeout(() => setVersionFlash(false), 2000);
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    if (!editor || !canEdit || !restoreId || restoredRef.current) return;
+    restoredRef.current = true;
+    const apply = async () => {
+      try {
+        const content = await api.versions.restore(doc.id, restoreId);
+        editor.commands.setContent(content as Parameters<typeof editor.commands.setContent>[0]);
+        dirtyRef.current = true;
+      } catch {
+        // ignore
+      }
+      setSearchParams({}, { replace: true });
+    };
+    if (session.provider.isSynced) apply();
+    else session.provider.on("synced", apply);
+    return () => {
+      session.provider.off("synced", apply);
+    };
+  }, [editor, canEdit, restoreId, doc.id, session, setSearchParams]);
+
+  useEffect(() => {
     return () => clearTimeout(titleTimer.current);
   }, []);
 
@@ -777,6 +836,23 @@ function CollabEditor({
               )}
             </button>
             <NotificationBell />
+            {canEdit && (
+              <button
+                onClick={saveVersion}
+                title="Save a named version"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-muted hover:text-fg"
+              >
+                {versionFlash ? <Save size={18} className="text-success" /> : <Save size={18} />}
+              </button>
+            )}
+            <button
+              onClick={() => navigate(`/d/${doc.id}/history`)}
+              title="Version history"
+              aria-label="Version history"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-muted hover:text-fg"
+            >
+              <HistoryIcon size={18} />
+            </button>
             {isOwner && (
               <button
                 onClick={() => setShareOpen(true)}

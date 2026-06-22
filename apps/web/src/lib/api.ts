@@ -113,6 +113,18 @@ export type NotificationDTO = {
   actor: { id: string; name: string; email: string; avatarUrl: string | null } | null;
 };
 
+export type VersionAuthor = { id: string; name: string; color: string } | null;
+
+export type VersionMeta = {
+  id: string;
+  label: string | null;
+  kind: "auto" | "named";
+  createdAt: string;
+  author: VersionAuthor;
+};
+
+export type VersionFull = VersionMeta & { content: unknown };
+
 export type SharedLinkInfo = {
   document: { id: string; title: string; icon: string | null };
   role: DocRole;
@@ -267,6 +279,26 @@ export const api = {
       request("GET", "/api/v1/notifications"),
     markRead: (ids?: string[]) =>
       request("POST", "/api/v1/notifications/read", ids ? { ids } : {}),
+  },
+
+  versions: {
+    list: async (docId: string): Promise<VersionMeta[]> => {
+      const data = await request("GET", `/api/v1/documents/${docId}/versions`);
+      return data.versions;
+    },
+    get: async (docId: string, vid: string): Promise<VersionFull> => {
+      const data = await request("GET", `/api/v1/documents/${docId}/versions/${vid}`);
+      return data.version;
+    },
+    create: async (
+      docId: string,
+      input: { content: unknown; label?: string; kind: "auto" | "named" }
+    ): Promise<{ version?: VersionMeta; deduped?: boolean }> =>
+      request("POST", `/api/v1/documents/${docId}/versions`, input),
+    restore: async (docId: string, vid: string): Promise<unknown> => {
+      const data = await request("POST", `/api/v1/documents/${docId}/versions/${vid}/restore`);
+      return data.content;
+    },
   },
 
   shared: {

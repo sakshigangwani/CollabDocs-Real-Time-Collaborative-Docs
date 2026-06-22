@@ -44,6 +44,7 @@ model User {
   reactions        CommentReaction[] @relation("ReactionUser")
   notifications    Notification[]    @relation("NotificationUser")
   notificationsSent Notification[]   @relation("NotificationActor")
+  versions         DocumentVersion[] @relation("VersionAuthor")
 }
 
 model Session {
@@ -117,6 +118,7 @@ model Document {
   acl        DocumentAcl[]
   shareLinks ShareLink[]
   comments   Comment[]
+  versions   DocumentVersion[]
 
   @@index([workspaceId, updatedAt])
 }
@@ -222,4 +224,20 @@ model Notification {
   actor User @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt])
+}
+
+model DocumentVersion {
+  id          String   @id @default(uuid())
+  documentId  String
+  authorId    String?
+  label       String?
+  kind        String   @default("auto")
+  content     Json
+  contentHash String
+  createdAt   DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author   User?    @relation("VersionAuthor", fields: [authorId], references: [id])
+
+  @@index([documentId, createdAt])
 }

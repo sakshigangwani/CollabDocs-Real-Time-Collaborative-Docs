@@ -9,6 +9,7 @@ import { documentRoutes } from "./routes/documents.js";
 import { shareRoutes } from "./routes/shares.js";
 import { commentRoutes } from "./routes/comments.js";
 import { notificationRoutes } from "./routes/notifications.js";
+import { versionRoutes } from "./routes/versions.js";
 import { createCollabServer } from "./collab.js";
 
 declare module "fastify" {
@@ -45,6 +46,7 @@ await app.register(documentRoutes);
 await app.register(shareRoutes);
 await app.register(commentRoutes);
 await app.register(notificationRoutes);
+await app.register(versionRoutes);
 
 const port = Number(process.env.PORT ?? 4000);
 const collabPort = Number(process.env.COLLAB_PORT ?? 4001);

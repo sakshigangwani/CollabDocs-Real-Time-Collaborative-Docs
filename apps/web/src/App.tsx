@@ -6,6 +6,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Home from "./pages/Home";
 import Editor from "./pages/Editor";
+import History from "./pages/History";
 import SharedLink from "./pages/SharedLink";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -35,6 +36,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Editor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/d/:id/history"
+            element={
+              <ProtectedRoute>
+                <History />
               </ProtectedRoute>
             }
           />

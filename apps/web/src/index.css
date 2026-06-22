@@ -320,3 +320,16 @@
   border-bottom-color: transparent;
   cursor: default;
 }
+
+.diff-add {
+  text-decoration: none;
+  border-radius: 2px;
+  padding: 0.05em 0.1em;
+}
+
+.diff-del {
+  text-decoration: line-through;
+  border-radius: 2px;
+  padding: 0.05em 0.1em;
+  opacity: 0.8;
+}
