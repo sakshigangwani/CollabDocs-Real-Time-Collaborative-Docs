@@ -139,5 +139,3 @@ keys are unset:
 | `RESEND_API_KEY` / `EMAIL_FROM` | Email notifications (else logged, not sent) |
 | `STRIPE_SECRET_KEY` / `STRIPE_PRICE_PRO` / `STRIPE_WEBHOOK_SECRET` | Billing |
 | Google / GitHub OAuth client IDs + secrets | Social login |
-
-See `apps/server/.env.example` for the full list.
