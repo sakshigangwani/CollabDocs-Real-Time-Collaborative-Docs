@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FileText,
   Users,
@@ -9,6 +9,8 @@ import {
   LogOut,
   Bell,
   Search,
+  Settings,
+  ShieldCheck,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
@@ -16,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../auth/AuthContext";
+import { api } from "../lib/api";
 
 export type View = "all" | "recent" | "shared" | "favorites" | "trash";
 
@@ -38,9 +41,17 @@ export default function Sidebar({
 }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem("sidebar-collapsed") === "1"
   );
+
+  useEffect(() => {
+    api.workspace
+      .get()
+      .then((wi) => setIsAdmin(wi.isAdmin))
+      .catch(() => {});
+  }, []);
 
   const firstName = (user?.name ?? "My").split(" ")[0];
   const initials = (user?.name ?? "U")
@@ -158,6 +169,32 @@ export default function Sidebar({
           <Bell size={17} />
           {!collapsed && "Notifications"}
         </button>
+        {isAdmin && (
+          <>
+            <button
+              onClick={() => navigate("/settings/workspace")}
+              title="Workspace settings"
+              className={
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-muted " +
+                (collapsed ? "justify-center" : "")
+              }
+            >
+              <Settings size={17} />
+              {!collapsed && "Settings"}
+            </button>
+            <button
+              onClick={() => navigate("/admin")}
+              title="Admin"
+              className={
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-muted " +
+                (collapsed ? "justify-center" : "")
+              }
+            >
+              <ShieldCheck size={17} />
+              {!collapsed && "Admin"}
+            </button>
+          </>
+        )}
       </nav>
 
       <div className={"border-t border-border " + (collapsed ? "p-2" : "p-3")}>

@@ -14,6 +14,7 @@ import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { HocuspocusProvider } from "@hocuspocus/provider";
+import DOMPurify from "dompurify";
 import { SlashCommand } from "./editor/SlashCommand";
 import { SearchReplace } from "./editor/SearchReplace";
 import FindReplaceBar from "./editor/FindReplaceBar";
@@ -518,6 +519,9 @@ function CollabEditor({
 
   const editor = useEditor({
     editable: canEdit,
+    editorProps: {
+      transformPastedHTML: (html) => DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }),
+    },
     extensions: [
       StarterKit.configure({ undoRedo: false }),
       Placeholder.configure({

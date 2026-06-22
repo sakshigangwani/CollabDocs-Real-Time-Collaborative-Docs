@@ -9,6 +9,8 @@ import Editor from "./pages/Editor";
 import History from "./pages/History";
 import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
+import WorkspaceSettings from "./pages/WorkspaceSettings";
+import Admin from "./pages/Admin";
 import SharedLink from "./pages/SharedLink";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -62,6 +64,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Search />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/workspace"
+            element={
+              <ProtectedRoute>
+                <WorkspaceSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Admin />
               </ProtectedRoute>
             }
           />

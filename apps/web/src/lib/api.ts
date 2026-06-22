@@ -131,6 +131,51 @@ export type NotificationDTO = {
   actor: { id: string; name: string; email: string; avatarUrl: string | null } | null;
 };
 
+export type WorkspaceRole = "ADMIN" | "MEMBER" | "GUEST";
+
+export type Workspace = {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  logoUrl: string | null;
+  defaultRole: DocRole;
+  allowedDomains: string[];
+  auditRetentionDays: number | null;
+};
+
+export type WorkspaceInfo = {
+  workspace: Workspace;
+  myRole: WorkspaceRole;
+  isOwner: boolean;
+  isAdmin: boolean;
+  memberCount: number;
+};
+
+export type WorkspaceMemberDTO = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  role: WorkspaceRole;
+  active: boolean;
+  isOwner: boolean;
+  isYou: boolean;
+};
+
+export type BillingInfo = { configured: boolean; plan: string; seats: number };
+
+export type AdminAuditEvent = {
+  id: string;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  documentTitle: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  actor: { id: string; name: string; email: string } | null;
+};
+
 export type NotificationPrefs = { emailInstant: boolean; digest: "off" | "daily" | "weekly" };
 export type SubscriptionLevel = "all" | "mentions" | "none";
 
@@ -154,10 +199,21 @@ export type SharedLinkInfo = {
   signedIn: boolean;
 };
 
+function readCookie(name: string): string | undefined {
+  const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  return match ? decodeURIComponent(match[1]) : undefined;
+}
+
 async function request(method: string, path: string, body?: unknown) {
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (method !== "GET") {
+    const csrf = readCookie("csrf");
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+  }
   const res = await fetch(`${API_URL}${path}`, {
     method,
-    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+    headers,
     credentials: "include",
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
@@ -325,6 +381,38 @@ export const api = {
       request("PUT", "/api/v1/notifications/preferences", patch),
     sendTestDigest: (): Promise<{ ok: boolean; sent?: number; empty?: boolean }> =>
       request("POST", "/api/v1/notifications/digest/test", {}),
+  },
+
+  workspace: {
+    get: (): Promise<WorkspaceInfo> => request("GET", "/api/v1/workspace"),
+    update: async (patch: Partial<Pick<Workspace, "name" | "logoUrl" | "defaultRole" | "allowedDomains" | "auditRetentionDays">>): Promise<Workspace> => {
+      const data = await request("PATCH", "/api/v1/workspace", patch);
+      return data.workspace;
+    },
+    members: async (): Promise<WorkspaceMemberDTO[]> => {
+      const data = await request("GET", "/api/v1/workspace/members");
+      return data.members;
+    },
+    invite: (email: string, role: WorkspaceRole) =>
+      request("POST", "/api/v1/workspace/members", { email, role }),
+    setMember: (userId: string, patch: { role?: WorkspaceRole; deactivated?: boolean }) =>
+      request("PATCH", `/api/v1/workspace/members/${userId}`, patch),
+    removeMember: (userId: string) =>
+      request("DELETE", `/api/v1/workspace/members/${userId}`),
+    transfer: (userId: string) => request("POST", "/api/v1/workspace/transfer", { userId }),
+    audit: async (action?: string): Promise<AdminAuditEvent[]> => {
+      const qs = action ? `?action=${encodeURIComponent(action)}` : "";
+      const data = await request("GET", `/api/v1/workspace/audit${qs}`);
+      return data.events;
+    },
+  },
+
+  billing: {
+    get: (): Promise<BillingInfo> => request("GET", "/api/v1/billing"),
+    checkout: (): Promise<{ url?: string; configured?: boolean }> =>
+      request("POST", "/api/v1/billing/checkout", {}),
+    portal: (): Promise<{ url?: string; configured?: boolean }> =>
+      request("POST", "/api/v1/billing/portal", {}),
   },
 
   search: async (params: SearchParams): Promise<SearchResult[]> => {

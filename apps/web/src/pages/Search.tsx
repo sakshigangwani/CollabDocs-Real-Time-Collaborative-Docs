@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Search as SearchIcon, Loader2, FileText, Star } from "lucide-react";
+import DOMPurify from "dompurify";
 import { api, type SearchResult, type SearchParams } from "../lib/api";
 
 function relative(iso: string) {
@@ -125,7 +126,9 @@ export default function Search() {
                     {r.snippet && (
                       <span
                         className="search-snippet mt-0.5 block text-sm text-muted"
-                        dangerouslySetInnerHTML={{ __html: r.snippet }}
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(r.snippet, { ALLOWED_TAGS: ["mark"] }),
+                        }}
                       />
                     )}
                     <span className="mt-0.5 block text-xs text-muted">Edited {relative(r.updatedAt)}</span>

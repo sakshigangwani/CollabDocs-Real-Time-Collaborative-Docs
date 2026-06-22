@@ -12,6 +12,8 @@ import {
 } from "../auth/session.js";
 import { getGoogle, getGitHub, oauthCookieOptions } from "../auth/oauth.js";
 import { createDefaultWorkspace } from "../workspace.js";
+import { writeAudit } from "../audit.js";
+import { authRateLimit } from "../ratelimit.js";
 
 const WEB_ORIGIN = process.env.WEB_ORIGIN ?? "http://localhost:5173";
 
@@ -69,7 +71,7 @@ async function upsertOAuthUser(
 
 export async function authRoutes(app: FastifyInstance) {
 
-  app.post("/api/v1/auth/signup", async (req, reply) => {
+  app.post("/api/v1/auth/signup", authRateLimit, async (req, reply) => {
     const parsed = signupSchema.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: "Please check your details and try again." });
@@ -88,10 +90,11 @@ export async function authRoutes(app: FastifyInstance) {
 
     const { token, expiresAt } = await createSession(user.id);
     reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(expiresAt));
+    await writeAudit({ actorId: user.id, action: "auth.signup", targetType: "user", targetId: user.id });
     return reply.send({ user: publicUser(user) });
   });
 
-  app.post("/api/v1/auth/login", async (req, reply) => {
+  app.post("/api/v1/auth/login", authRateLimit, async (req, reply) => {
     const parsed = loginSchema.safeParse(req.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: "Please enter a valid email and password." });
@@ -108,11 +111,15 @@ export async function authRoutes(app: FastifyInstance) {
 
     const { token, expiresAt } = await createSession(user.id);
     reply.setCookie(SESSION_COOKIE, token, sessionCookieOptions(expiresAt));
+    await writeAudit({ actorId: user.id, action: "auth.login", targetType: "user", targetId: user.id });
     return reply.send({ user: publicUser(user) });
   });
 
   app.post("/api/v1/auth/logout", async (req, reply) => {
     const token = req.cookies[SESSION_COOKIE];
+    if (req.user) {
+      await writeAudit({ actorId: req.user.id, action: "auth.logout", targetType: "user", targetId: req.user.id });
+    }
     if (token) await deleteSession(token);
     reply.clearCookie(SESSION_COOKIE, { path: "/" });
     return reply.send({ ok: true });

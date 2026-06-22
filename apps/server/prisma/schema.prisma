@@ -76,12 +76,18 @@ model OAuthAccount {
 }
 
 model Workspace {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  plan      String   @default("free")
-  ownerId   String
-  createdAt DateTime @default(now())
+  id                 String   @id @default(uuid())
+  name               String
+  slug               String   @unique
+  plan               String   @default("free")
+  logoUrl            String?
+  defaultRole        DocRole  @default(VIEWER)
+  allowedDomains     String[] @default([])
+  auditRetentionDays Int?
+  stripeCustomerId   String?
+  stripeSubscriptionId String?
+  ownerId            String
+  createdAt          DateTime @default(now())
 
   owner     User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members   WorkspaceMember[]
@@ -89,10 +95,11 @@ model Workspace {
 }
 
 model WorkspaceMember {
-  workspaceId String
-  userId      String
-  role        WorkspaceRole @default(MEMBER)
-  joinedAt    DateTime      @default(now())
+  workspaceId   String
+  userId        String
+  role          WorkspaceRole @default(MEMBER)
+  joinedAt      DateTime      @default(now())
+  deactivatedAt DateTime?
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
