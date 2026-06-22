@@ -48,6 +48,9 @@ import {
   MessageSquarePlus,
   History as HistoryIcon,
   Save,
+  Bell,
+  BellRing,
+  BellOff,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ShareDialog from "./ShareDialog";
@@ -64,6 +67,7 @@ import {
   type CommentDTO,
   type DocRole,
   type FullDocument,
+  type SubscriptionLevel,
 } from "../lib/api";
 import {
   computeStatus,
@@ -481,6 +485,8 @@ function CollabEditor({
   const activateRef = useRef<(id: string) => void>(() => {});
 
   const [versionFlash, setVersionFlash] = useState(false);
+  const [subLevel, setSubLevel] = useState<SubscriptionLevel>("mentions");
+  const [subOpen, setSubOpen] = useState(false);
   const dirtyRef = useRef(false);
   const restoredRef = useRef(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -621,6 +627,16 @@ function CollabEditor({
       }
     }
   }, [followClientId, peers]);
+
+  useEffect(() => {
+    api.documents.getSubscription(doc.id).then(setSubLevel).catch(() => {});
+  }, [doc.id]);
+
+  async function changeSubscription(level: SubscriptionLevel) {
+    setSubLevel(level);
+    setSubOpen(false);
+    await api.documents.setSubscription(doc.id, level).catch(() => {});
+  }
 
   const loadComments = useCallback(async () => {
     try {
@@ -853,6 +869,50 @@ function CollabEditor({
             >
               <HistoryIcon size={18} />
             </button>
+            <div className="relative">
+              <button
+                onClick={() => setSubOpen((o) => !o)}
+                title={`Notifications for this doc: ${subLevel}`}
+                aria-label="Document notifications"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-muted hover:text-fg"
+              >
+                {subLevel === "all" ? (
+                  <BellRing size={18} />
+                ) : subLevel === "none" ? (
+                  <BellOff size={18} />
+                ) : (
+                  <Bell size={18} />
+                )}
+              </button>
+              {subOpen && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setSubOpen(false)} />
+                  <div className="absolute right-0 top-11 z-40 w-52 overflow-hidden rounded-lg border border-border bg-surface shadow-xl">
+                    <p className="border-b border-border px-3 py-2 text-xs font-medium text-muted">
+                      Notify me about
+                    </p>
+                    {(
+                      [
+                        ["all", "All activity"],
+                        ["mentions", "Mentions & replies"],
+                        ["none", "Nothing (mute)"],
+                      ] as [SubscriptionLevel, string][]
+                    ).map(([level, label]) => (
+                      <button
+                        key={level}
+                        onClick={() => changeSubscription(level)}
+                        className={
+                          "block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-surface-muted " +
+                          (subLevel === level ? "font-medium text-brand" : "")
+                        }
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             {isOwner && (
               <button
                 onClick={() => setShareOpen(true)}

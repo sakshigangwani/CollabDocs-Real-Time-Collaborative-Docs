@@ -6,6 +6,7 @@ import { getDocRole, roleAtLeast } from "../permissions.js";
 import { writeAudit } from "../audit.js";
 import { parseMentions } from "../mentions.js";
 import { colorForUser } from "../auth/collab-token.js";
+import { createNotifications, subscriptionLevel, type NotifyItem } from "../notify.js";
 
 const authorSelect = {
   id: true,
@@ -163,22 +164,30 @@ export async function commentRoutes(app: FastifyInstance) {
     const recipients = new Map<string, string>();
     for (const uid of parseMentions(body)) {
       if (uid === user.id) continue;
-      if (roleAtLeast(await getDocRole(uid, id), "VIEWER")) recipients.set(uid, "mention");
+      if (!roleAtLeast(await getDocRole(uid, id), "VIEWER")) continue;
+      if ((await subscriptionLevel(uid, id)) !== "none") recipients.set(uid, "mention");
     }
     if (rootAuthorId && rootAuthorId !== user.id && !recipients.has(rootAuthorId)) {
-      recipients.set(rootAuthorId, "reply");
+      if ((await subscriptionLevel(rootAuthorId, id)) !== "none") recipients.set(rootAuthorId, "reply");
     }
-    if (recipients.size > 0) {
-      await prisma.notification.createMany({
-        data: [...recipients].map(([uid, type]) => ({
-          userId: uid,
-          type,
-          documentId: id,
-          commentId: comment.id,
-          actorId: user.id,
-        })),
-      });
+
+    const subscribers = await prisma.documentSubscription.findMany({
+      where: { documentId: id, level: "all" },
+      select: { userId: true },
+    });
+    for (const { userId } of subscribers) {
+      if (userId === user.id || recipients.has(userId)) continue;
+      recipients.set(userId, "comment");
     }
+
+    const items: NotifyItem[] = [...recipients].map(([uid, type]) => ({
+      userId: uid,
+      type,
+      documentId: id,
+      commentId: comment.id,
+      actorId: user.id,
+    }));
+    await createNotifications(items);
 
     await writeAudit({
       documentId: id,

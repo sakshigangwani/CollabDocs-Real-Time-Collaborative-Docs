@@ -113,6 +113,9 @@ export type NotificationDTO = {
   actor: { id: string; name: string; email: string; avatarUrl: string | null } | null;
 };
 
+export type NotificationPrefs = { emailInstant: boolean; digest: "off" | "daily" | "weekly" };
+export type SubscriptionLevel = "all" | "mentions" | "none";
+
 export type VersionAuthor = { id: string; name: string; color: string } | null;
 
 export type VersionMeta = {
@@ -200,6 +203,14 @@ export const api = {
     },
     destroy: (id: string) =>
       request("DELETE", `/api/v1/documents/${id}/permanent`),
+    getSubscription: async (id: string): Promise<SubscriptionLevel> => {
+      const data = await request("GET", `/api/v1/documents/${id}/subscription`);
+      return data.level;
+    },
+    setSubscription: async (id: string, level: SubscriptionLevel): Promise<SubscriptionLevel> => {
+      const data = await request("PUT", `/api/v1/documents/${id}/subscription`, { level });
+      return data.level;
+    },
   },
 
   shares: {
@@ -279,6 +290,12 @@ export const api = {
       request("GET", "/api/v1/notifications"),
     markRead: (ids?: string[]) =>
       request("POST", "/api/v1/notifications/read", ids ? { ids } : {}),
+    getPrefs: async (): Promise<NotificationPrefs> =>
+      request("GET", "/api/v1/notifications/preferences"),
+    setPrefs: async (patch: Partial<NotificationPrefs>): Promise<NotificationPrefs> =>
+      request("PUT", "/api/v1/notifications/preferences", patch),
+    sendTestDigest: (): Promise<{ ok: boolean; sent?: number; empty?: boolean }> =>
+      request("POST", "/api/v1/notifications/digest/test", {}),
   },
 
   versions: {

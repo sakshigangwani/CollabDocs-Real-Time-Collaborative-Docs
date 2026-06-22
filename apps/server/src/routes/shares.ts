@@ -6,6 +6,7 @@ import { prisma } from "../db.js";
 import { getDocRole, roleAtLeast } from "../permissions.js";
 import { hashPassword, verifyPassword } from "../auth/password.js";
 import { writeAudit } from "../audit.js";
+import { createNotifications } from "../notify.js";
 
 const grantableRole = z.enum(["EDITOR", "COMMENTER", "VIEWER"]);
 
@@ -111,6 +112,9 @@ export async function shareRoutes(app: FastifyInstance) {
     }
 
     await setUserAcl(id, target.id, parsed.data.role);
+    await createNotifications([
+      { userId: target.id, type: "share_invite", documentId: id, actorId: user.id },
+    ]);
     await writeAudit({
       documentId: id,
       actorId: user.id,

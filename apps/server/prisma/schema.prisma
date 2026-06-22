@@ -45,6 +45,8 @@ model User {
   notifications    Notification[]    @relation("NotificationUser")
   notificationsSent Notification[]   @relation("NotificationActor")
   versions         DocumentVersion[] @relation("VersionAuthor")
+  notificationPreference NotificationPreference?
+  subscriptions    DocumentSubscription[]
 }
 
 model Session {
@@ -119,6 +121,7 @@ model Document {
   shareLinks ShareLink[]
   comments   Comment[]
   versions   DocumentVersion[]
+  subscriptions DocumentSubscription[]
 
   @@index([workspaceId, updatedAt])
 }
@@ -240,4 +243,26 @@ model DocumentVersion {
   author   User?    @relation("VersionAuthor", fields: [authorId], references: [id])
 
   @@index([documentId, createdAt])
+}
+
+model NotificationPreference {
+  userId       String    @id
+  emailInstant Boolean   @default(true)
+  digest       String    @default("off")
+  lastDigestAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DocumentSubscription {
+  id         String @id @default(uuid())
+  userId     String
+  documentId String
+  level      String @default("mentions")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, documentId])
+  @@index([documentId])
 }

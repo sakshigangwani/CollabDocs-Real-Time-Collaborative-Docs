@@ -6,6 +6,7 @@ import { prisma } from "../db.js";
 import { getDocRole, roleAtLeast } from "../permissions.js";
 import { writeAudit } from "../audit.js";
 import { colorForUser } from "../auth/collab-token.js";
+import { createNotifications } from "../notify.js";
 
 async function requireDoc(
   userId: string,
@@ -167,6 +168,16 @@ export async function versionRoutes(app: FastifyInstance) {
       select: { id: true, content: true },
     });
     if (!version) return reply.code(404).send({ error: "Version not found." });
+
+    const subscribers = await prisma.documentSubscription.findMany({
+      where: { documentId: id, level: "all" },
+      select: { userId: true },
+    });
+    await createNotifications(
+      subscribers
+        .filter((s) => s.userId !== user.id)
+        .map((s) => ({ userId: s.userId, type: "version_restored", documentId: id, actorId: user.id })),
+    );
 
     await writeAudit({
       documentId: id,

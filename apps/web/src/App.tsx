@@ -7,6 +7,7 @@ import SignUp from "./pages/SignUp";
 import Home from "./pages/Home";
 import Editor from "./pages/Editor";
 import History from "./pages/History";
+import Notifications from "./pages/Notifications";
 import SharedLink from "./pages/SharedLink";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -44,6 +45,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <History />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

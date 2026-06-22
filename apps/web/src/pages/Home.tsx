@@ -7,6 +7,7 @@ import DocumentCard from "../components/DocumentCard";
 import TrashItem from "../components/TrashItem";
 import Logo from "../components/Logo";
 import ThemeToggle from "../components/ThemeToggle";
+import NotificationBell from "../components/NotificationBell";
 import { useAuth } from "../auth/AuthContext";
 import { api, type DocumentDTO } from "../lib/api";
 
@@ -115,6 +116,7 @@ export default function Home() {
             <span className="font-semibold">CollabDocs</span>
           </div>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <ThemeToggle />
             <button
               onClick={handleLogout}

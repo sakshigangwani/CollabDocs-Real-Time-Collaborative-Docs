@@ -6,6 +6,7 @@ import {
   Trash2,
   Plus,
   LogOut,
+  Bell,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
@@ -132,6 +133,17 @@ export default function Sidebar({
             {!collapsed && item.label}
           </button>
         ))}
+        <button
+          onClick={() => navigate("/notifications")}
+          title="Notifications"
+          className={
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-muted " +
+            (collapsed ? "justify-center" : "")
+          }
+        >
+          <Bell size={17} />
+          {!collapsed && "Notifications"}
+        </button>
       </nav>
 
       <div className={"border-t border-border " + (collapsed ? "p-2" : "p-3")}>

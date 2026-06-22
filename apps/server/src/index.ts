@@ -10,6 +10,7 @@ import { shareRoutes } from "./routes/shares.js";
 import { commentRoutes } from "./routes/comments.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { versionRoutes } from "./routes/versions.js";
+import { scheduleDigests } from "./digest.js";
 import { createCollabServer } from "./collab.js";
 
 declare module "fastify" {
@@ -56,6 +57,7 @@ const collab = createCollabServer();
 try {
   await app.listen({ port, host: "0.0.0.0" });
   await collab.listen(collabPort);
+  scheduleDigests();
   console.log(`Server ready at http://localhost:${port}`);
   console.log(`Collab server ready at ws://localhost:${collabPort}`);
 } catch (err) {
