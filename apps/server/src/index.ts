@@ -10,6 +10,8 @@ import { shareRoutes } from "./routes/shares.js";
 import { commentRoutes } from "./routes/comments.js";
 import { notificationRoutes } from "./routes/notifications.js";
 import { versionRoutes } from "./routes/versions.js";
+import { searchRoutes } from "./routes/search.js";
+import { discoveryRoutes } from "./routes/discovery.js";
 import { scheduleDigests } from "./digest.js";
 import { createCollabServer } from "./collab.js";
 
@@ -48,6 +50,8 @@ await app.register(shareRoutes);
 await app.register(commentRoutes);
 await app.register(notificationRoutes);
 await app.register(versionRoutes);
+await app.register(searchRoutes);
+await app.register(discoveryRoutes);
 
 const port = Number(process.env.PORT ?? 4000);
 const collabPort = Number(process.env.COLLAB_PORT ?? 4001);

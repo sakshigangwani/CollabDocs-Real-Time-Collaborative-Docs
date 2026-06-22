@@ -3,10 +3,12 @@ import {
   FileText,
   Users,
   Star,
+  Clock,
   Trash2,
   Plus,
   LogOut,
   Bell,
+  Search,
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
@@ -15,10 +17,11 @@ import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../auth/AuthContext";
 
-export type View = "all" | "shared" | "favorites" | "trash";
+export type View = "all" | "recent" | "shared" | "favorites" | "trash";
 
 const navItems: { key: View; icon: typeof FileText; label: string }[] = [
   { key: "all", icon: FileText, label: "All documents" },
+  { key: "recent", icon: Clock, label: "Recent" },
   { key: "shared", icon: Users, label: "Shared with me" },
   { key: "favorites", icon: Star, label: "Favorites" },
   { key: "trash", icon: Trash2, label: "Trash" },
@@ -133,6 +136,17 @@ export default function Sidebar({
             {!collapsed && item.label}
           </button>
         ))}
+        <button
+          onClick={() => navigate("/search")}
+          title="Search"
+          className={
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-muted " +
+            (collapsed ? "justify-center" : "")
+          }
+        >
+          <Search size={17} />
+          {!collapsed && "Search"}
+        </button>
         <button
           onClick={() => navigate("/notifications")}
           title="Notifications"

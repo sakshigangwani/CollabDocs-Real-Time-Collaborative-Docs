@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FileText, Trash2, Users } from "lucide-react";
+import { FileText, Trash2, Users, Star } from "lucide-react";
 import type { DocRole } from "../lib/api";
 
 export type Doc = {
@@ -7,6 +7,7 @@ export type Doc = {
   title: string;
   updatedAt: string;
   role?: DocRole;
+  isFavorite?: boolean;
 };
 
 const ROLE_LABEL: Record<DocRole, string> = {
@@ -47,10 +48,12 @@ export default function DocumentCard({
   doc,
   onOpen,
   onDelete,
+  onToggleFavorite,
 }: {
   doc: Doc;
   onOpen: () => void;
   onDelete: () => void;
+  onToggleFavorite?: () => void;
 }) {
   const isShared = doc.role !== undefined && doc.role !== "OWNER";
   return (
@@ -81,6 +84,24 @@ export default function DocumentCard({
           )}
         </p>
       </div>
+
+      {onToggleFavorite && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite();
+          }}
+          aria-label={doc.isFavorite ? "Unfavorite" : "Favorite"}
+          className={
+            "absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg backdrop-blur transition-opacity " +
+            (doc.isFavorite
+              ? "bg-black/25 text-warn opacity-100"
+              : "bg-black/25 text-white opacity-0 hover:bg-black/45 group-hover:opacity-100")
+          }
+        >
+          <Star size={15} className={doc.isFavorite ? "fill-warn" : ""} />
+        </button>
+      )}
 
       {!isShared && (
         <button

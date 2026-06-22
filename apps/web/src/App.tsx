@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Editor from "./pages/Editor";
 import History from "./pages/History";
 import Notifications from "./pages/Notifications";
+import Search from "./pages/Search";
 import SharedLink from "./pages/SharedLink";
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -53,6 +54,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Notifications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <ProtectedRoute>
+                <Search />
               </ProtectedRoute>
             }
           />

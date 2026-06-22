@@ -15,6 +15,8 @@ import * as Y from "yjs";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { HocuspocusProvider } from "@hocuspocus/provider";
 import { SlashCommand } from "./editor/SlashCommand";
+import { SearchReplace } from "./editor/SearchReplace";
+import FindReplaceBar from "./editor/FindReplaceBar";
 import {
   CommentHighlight,
   applyCommentRanges,
@@ -487,6 +489,7 @@ function CollabEditor({
   const [versionFlash, setVersionFlash] = useState(false);
   const [subLevel, setSubLevel] = useState<SubscriptionLevel>("mentions");
   const [subOpen, setSubOpen] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   const dirtyRef = useRef(false);
   const restoredRef = useRef(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -529,6 +532,7 @@ function CollabEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       SlashCommand,
+      SearchReplace,
       CommentHighlight.configure({
         onActivate: (id) => activateRef.current(id),
       }),
@@ -630,7 +634,19 @@ function CollabEditor({
 
   useEffect(() => {
     api.documents.getSubscription(doc.id).then(setSubLevel).catch(() => {});
+    api.documents.visit(doc.id).catch(() => {});
   }, [doc.id]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setFindOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   async function changeSubscription(level: SubscriptionLevel) {
     setSubLevel(level);
@@ -942,6 +958,10 @@ function CollabEditor({
           canComment={canComment}
           onComment={startComment}
         />
+      )}
+
+      {editor && findOpen && (
+        <FindReplaceBar editor={editor} canEdit={canEdit} onClose={() => setFindOpen(false)} />
       )}
 
       <CommentsDrawer

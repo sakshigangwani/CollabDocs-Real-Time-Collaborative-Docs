@@ -26,9 +26,27 @@ export type DocumentDTO = {
   updatedAt: string;
   deletedAt: string | null;
   role?: DocRole;
+  isFavorite?: boolean;
 };
 
 export type FullDocument = DocumentDTO & { content: unknown };
+
+export type SearchResult = {
+  id: string;
+  title: string;
+  icon: string | null;
+  updatedAt: string;
+  snippet: string | null;
+  isFavorite: boolean;
+};
+
+export type SearchParams = {
+  q: string;
+  mine?: boolean;
+  hasComments?: boolean;
+  favorites?: boolean;
+  within?: "7" | "30";
+};
 
 export type Collaborator = {
   id: string;
@@ -203,6 +221,17 @@ export const api = {
     },
     destroy: (id: string) =>
       request("DELETE", `/api/v1/documents/${id}/permanent`),
+    favorite: (id: string) => request("PUT", `/api/v1/documents/${id}/favorite`),
+    unfavorite: (id: string) => request("DELETE", `/api/v1/documents/${id}/favorite`),
+    listFavorites: async (): Promise<DocumentDTO[]> => {
+      const data = await request("GET", "/api/v1/documents/favorites");
+      return data.documents;
+    },
+    visit: (id: string) => request("POST", `/api/v1/documents/${id}/visit`),
+    listRecents: async (): Promise<DocumentDTO[]> => {
+      const data = await request("GET", "/api/v1/documents/recents");
+      return data.documents;
+    },
     getSubscription: async (id: string): Promise<SubscriptionLevel> => {
       const data = await request("GET", `/api/v1/documents/${id}/subscription`);
       return data.level;
@@ -296,6 +325,16 @@ export const api = {
       request("PUT", "/api/v1/notifications/preferences", patch),
     sendTestDigest: (): Promise<{ ok: boolean; sent?: number; empty?: boolean }> =>
       request("POST", "/api/v1/notifications/digest/test", {}),
+  },
+
+  search: async (params: SearchParams): Promise<SearchResult[]> => {
+    const qs = new URLSearchParams({ q: params.q });
+    if (params.mine) qs.set("mine", "1");
+    if (params.hasComments) qs.set("hasComments", "1");
+    if (params.favorites) qs.set("favorites", "1");
+    if (params.within) qs.set("within", params.within);
+    const data = await request("GET", `/api/v1/search?${qs.toString()}`);
+    return data.results;
   },
 
   versions: {

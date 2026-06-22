@@ -7,6 +7,7 @@ import { getDocRole, roleAtLeast } from "../permissions.js";
 import { writeAudit } from "../audit.js";
 import { colorForUser } from "../auth/collab-token.js";
 import { createNotifications } from "../notify.js";
+import { textOf, reindex } from "../search.js";
 
 async function requireDoc(
   userId: string,
@@ -138,6 +139,9 @@ export async function versionRoutes(app: FastifyInstance) {
       },
       include: { author: { select: { id: true, name: true } } },
     });
+    await prisma.document.update({ where: { id }, data: { searchText: textOf(content) } });
+    await reindex(id);
+
     await writeAudit({
       documentId: id,
       actorId: user.id,

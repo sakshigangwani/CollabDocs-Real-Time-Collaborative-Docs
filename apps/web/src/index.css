@@ -333,3 +333,19 @@
   padding: 0.05em 0.1em;
   opacity: 0.8;
 }
+
+.prose-doc .ProseMirror .search-match {
+  background-color: color-mix(in srgb, var(--warn) 35%, transparent);
+  border-radius: 2px;
+}
+
+.prose-doc .ProseMirror .search-match-current {
+  background-color: color-mix(in srgb, var(--brand) 45%, transparent);
+}
+
+.search-snippet mark {
+  background-color: color-mix(in srgb, var(--warn) 40%, transparent);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 0.1em;
+}

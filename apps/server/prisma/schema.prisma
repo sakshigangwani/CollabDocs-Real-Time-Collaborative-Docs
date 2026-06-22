@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
 }
 
 enum WorkspaceRole {
@@ -47,6 +49,8 @@ model User {
   versions         DocumentVersion[] @relation("VersionAuthor")
   notificationPreference NotificationPreference?
   subscriptions    DocumentSubscription[]
+  favorites        Favorite[]
+  recents          RecentDocument[]
 }
 
 model Session {
@@ -105,6 +109,8 @@ model Document {
   coverUrl       String?
   content        Json?
   ydoc           Bytes?
+  searchText     String?
+  searchVector   Unsupported("tsvector")?
   createdById    String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -122,8 +128,13 @@ model Document {
   comments   Comment[]
   versions   DocumentVersion[]
   subscriptions DocumentSubscription[]
+  favorites  Favorite[]
+  recents    RecentDocument[]
 
   @@index([workspaceId, updatedAt])
+  @@index([searchVector], type: Gin)
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([searchText(ops: raw("gin_trgm_ops"))], type: Gin)
 }
 
 model DocumentAcl {
@@ -265,4 +276,28 @@ model DocumentSubscription {
 
   @@unique([userId, documentId])
   @@index([documentId])
+}
+
+model Favorite {
+  userId     String
+  documentId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, documentId])
+  @@index([userId])
+}
+
+model RecentDocument {
+  userId     String
+  documentId String
+  viewedAt   DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, documentId])
+  @@index([userId, viewedAt])
 }

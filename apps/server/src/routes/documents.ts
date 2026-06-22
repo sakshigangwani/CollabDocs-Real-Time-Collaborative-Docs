@@ -11,8 +11,9 @@ import {
   roleAtLeast,
 } from "../permissions.js";
 import { colorForUser, mintCollabToken } from "../auth/collab-token.js";
+import { reindex } from "../search.js";
 
-function publicDoc(doc: Document, role?: DocRole | null) {
+function publicDoc(doc: Document, role?: DocRole | null, isFavorite?: boolean) {
   return {
     id: doc.id,
     title: doc.title,
@@ -21,6 +22,7 @@ function publicDoc(doc: Document, role?: DocRole | null) {
     updatedAt: doc.updatedAt,
     deletedAt: doc.deletedAt,
     role: role ?? undefined,
+    isFavorite: isFavorite ?? undefined,
   };
 }
 
@@ -58,8 +60,15 @@ export async function documentRoutes(app: FastifyInstance) {
       include: { acl: { where: aclPrincipalWhere(user.id, workspaceIds), select: { role: true } } },
       orderBy: { updatedAt: "desc" },
     });
+    const favIds = new Set(
+      (await prisma.favorite.findMany({ where: { userId: user.id }, select: { documentId: true } })).map(
+        (f) => f.documentId,
+      ),
+    );
     return {
-      documents: docs.map((doc) => publicDoc(doc, bestRole(doc.acl.map((a) => a.role)))),
+      documents: docs.map((doc) =>
+        publicDoc(doc, bestRole(doc.acl.map((a) => a.role)), favIds.has(doc.id)),
+      ),
     };
   });
 
@@ -181,6 +190,7 @@ export async function documentRoutes(app: FastifyInstance) {
     }
 
     const doc = await prisma.document.update({ where: { id }, data });
+    if (data.title !== undefined) await reindex(id);
     return { document: fullDoc(doc, role) };
   });
 

@@ -13,6 +13,7 @@ import { api, type DocumentDTO } from "../lib/api";
 
 const titles: Record<View, string> = {
   all: "All documents",
+  recent: "Recent",
   shared: "Shared with me",
   favorites: "Favorites",
   trash: "Trash",
@@ -31,29 +32,40 @@ export default function Home() {
   const filtered = items.filter((d) =>
     d.title.toLowerCase().includes(query.trim().toLowerCase())
   );
-  const searchable = view === "all" || view === "trash" || view === "shared";
+  const searchable = view !== "trash";
 
   useEffect(() => {
     setQuery("");
-    if (view === "all" || view === "trash" || view === "shared") {
-      setLoading(true);
-      const load =
-        view === "trash" ? api.documents.listTrash() : api.documents.list();
-      load
-        .then((docs) =>
-          setItems(
-            view === "shared"
-              ? docs.filter((d) => d.role && d.role !== "OWNER")
-              : docs
-          )
+    setLoading(true);
+    const load =
+      view === "trash"
+        ? api.documents.listTrash()
+        : view === "favorites"
+          ? api.documents.listFavorites()
+          : view === "recent"
+            ? api.documents.listRecents()
+            : api.documents.list();
+    load
+      .then((docs) =>
+        setItems(
+          view === "shared"
+            ? docs.filter((d) => d.role && d.role !== "OWNER")
+            : docs
         )
-        .catch(() => setItems([]))
-        .finally(() => setLoading(false));
-    } else {
-      setItems([]);
-      setLoading(false);
-    }
+      )
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
   }, [view]);
+
+  function toggleFavorite(doc: DocumentDTO) {
+    const next = !doc.isFavorite;
+    setItems((prev) =>
+      view === "favorites" && !next
+        ? prev.filter((d) => d.id !== doc.id)
+        : prev.map((d) => (d.id === doc.id ? { ...d, isFavorite: next } : d))
+    );
+    (next ? api.documents.favorite(doc.id) : api.documents.unfavorite(doc.id)).catch(() => {});
+  }
 
   async function handleNew() {
     setCreating(true);
@@ -102,7 +114,11 @@ export default function Home() {
       return `${items.length} document${items.length === 1 ? "" : "s"} shared with you`;
     if (view === "trash")
       return `${items.length} item${items.length === 1 ? "" : "s"} in trash`;
-    return "Coming soon";
+    if (view === "favorites")
+      return `${items.length} favorite${items.length === 1 ? "" : "s"}`;
+    if (view === "recent")
+      return `${items.length} recently opened`;
+    return "";
   }
 
   return (
@@ -157,11 +173,7 @@ export default function Home() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={
-                  view === "trash"
-                    ? "Search trash..."
-                    : "Search documents..."
-                }
+                placeholder="Filter by title..."
                 className="w-full rounded-xl border border-border bg-surface py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
             </div>
@@ -182,13 +194,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : view === "favorites" ? (
-            <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
-              <h2 className="font-semibold">Coming soon</h2>
-              <p className="mt-1 max-w-xs text-sm text-muted">
-                This section isn't built yet.
-              </p>
-            </div>
           ) : filtered.length === 0 ? (
             <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-20 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
@@ -201,7 +206,11 @@ export default function Home() {
                     ? "Trash is empty"
                     : view === "shared"
                       ? "Nothing shared yet"
-                      : "No documents yet"}
+                      : view === "favorites"
+                        ? "No favorites yet"
+                        : view === "recent"
+                          ? "Nothing opened yet"
+                          : "No documents yet"}
               </h2>
               <p className="mt-1 max-w-xs text-sm text-muted">
                 {query
@@ -210,7 +219,11 @@ export default function Home() {
                     ? "Deleted documents will appear here."
                     : view === "shared"
                       ? "Documents others share with you will appear here."
-                      : "Create your first document to get started."}
+                      : view === "favorites"
+                        ? "Star a document to find it here quickly."
+                        : view === "recent"
+                          ? "Documents you open will show up here."
+                          : "Create your first document to get started."}
               </p>
               {!query && view === "all" && (
                 <button
@@ -245,6 +258,7 @@ export default function Home() {
                     doc={doc}
                     onOpen={() => navigate(`/d/${doc.id}`)}
                     onDelete={() => handleDelete(doc.id)}
+                    onToggleFavorite={() => toggleFavorite(doc)}
                   />
                 ))}
               </AnimatePresence>
