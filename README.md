@@ -5,9 +5,6 @@ Multiple people can open the same document and edit it together, see each other'
 cursors live, leave comments, share with fine-grained permissions, browse version
 history, and search across everything.
 
-It's a breadth-first solo build covering the full feature surface of a production
-document platform. Full build plan: [`Docs/CollabDocs-1-Month-Plan.md`](Docs/CollabDocs-1-Month-Plan.md).
-
 ## Features
 
 ### ✍️ Rich editing
