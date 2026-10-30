@@ -1,0 +1,16 @@
+# Non-secret server settings. Secrets live in the `collabdocs-server` Secret (see secret.example.yaml).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collabdocs-server
+data:
+  NODE_ENV: production
+  PORT: "4000"
+  COLLAB_PORT: "4001"
+  WEB_ORIGIN: https://docs.example.com
+  # In-cluster Redis from redis.yaml; point at a managed Redis in production.
+  REDIS_URL: redis://redis:6379
+  S3_BUCKET: collabdocs-uploads
+  S3_REGION: us-east-1
+  OPENAI_CHAT_MODEL: gpt-4o-mini
+  OPENAI_EMBEDDING_MODEL: text-embedding-3-small

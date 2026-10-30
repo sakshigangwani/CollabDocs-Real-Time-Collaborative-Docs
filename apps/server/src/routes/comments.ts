@@ -21,6 +21,9 @@ type CommentWithRelations = {
   body: string;
   anchorStart: string | null;
   anchorEnd: string | null;
+  anchorFrom: number | null;
+  anchorTo: number | null;
+  anchorVersion: number | null;
   quotedText: string | null;
   resolvedAt: Date | null;
   createdAt: Date;
@@ -69,6 +72,9 @@ function serializeComment(c: CommentWithRelations, currentUserId: string) {
     body: c.body,
     anchorStart: c.anchorStart,
     anchorEnd: c.anchorEnd,
+    anchorFrom: c.anchorFrom,
+    anchorTo: c.anchorTo,
+    anchorVersion: c.anchorVersion,
     quotedText: c.quotedText,
     resolved: c.resolvedAt !== null,
     resolvedAt: c.resolvedAt,
@@ -130,13 +136,15 @@ export async function commentRoutes(app: FastifyInstance) {
       .object({
         body: z.string().min(1).max(5000),
         parentId: z.string().uuid().optional(),
-        anchorStart: z.string().max(2048).optional(),
-        anchorEnd: z.string().max(2048).optional(),
+        anchorFrom: z.number().int().nonnegative().optional(),
+        anchorTo: z.number().int().nonnegative().optional(),
+        anchorVersion: z.number().int().nonnegative().optional(),
         quotedText: z.string().max(300).optional(),
       })
       .safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: "Invalid comment." });
-    const { body, parentId, anchorStart, anchorEnd, quotedText } = parsed.data;
+    const { body, parentId, anchorFrom, anchorTo, anchorVersion, quotedText } = parsed.data;
+    const anchored = !parentId && anchorFrom !== undefined && anchorTo !== undefined && anchorVersion !== undefined;
 
     let rootAuthorId: string | null = null;
     if (parentId) {
@@ -154,8 +162,9 @@ export async function commentRoutes(app: FastifyInstance) {
         parentId: parentId ?? null,
         authorId: user.id,
         body,
-        anchorStart: parentId ? null : anchorStart ?? null,
-        anchorEnd: parentId ? null : anchorEnd ?? null,
+        anchorFrom: anchored ? Math.min(anchorFrom, anchorTo) : null,
+        anchorTo: anchored ? Math.max(anchorFrom, anchorTo) : null,
+        anchorVersion: anchored ? anchorVersion : null,
         quotedText: parentId ? null : quotedText ?? null,
       },
       include: { author: { select: authorSelect }, reactions: { select: { emoji: true, userId: true } } },

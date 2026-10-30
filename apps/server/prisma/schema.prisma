@@ -6,7 +6,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [pg_trgm]
+  extensions = [pg_trgm, vector]
 }
 
 enum WorkspaceRole {
@@ -51,6 +51,7 @@ model User {
   subscriptions    DocumentSubscription[]
   favorites        Favorite[]
   recents          RecentDocument[]
+  attachments      Attachment[]      @relation("AttachmentUploader")
 }
 
 model Session {
@@ -115,9 +116,13 @@ model Document {
   icon           String?
   coverUrl       String?
   content        Json?
+  // OT version of `content`: the number of steps applied since the document was created.
+  otVersion      Int       @default(0)
+  // Legacy Yjs state from before the OT migration; converted to `content` on first load.
   ydoc           Bytes?
   searchText     String?
   searchVector   Unsupported("tsvector")?
+  embeddedHash   String?
   createdById    String
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -137,6 +142,8 @@ model Document {
   subscriptions DocumentSubscription[]
   favorites  Favorite[]
   recents    RecentDocument[]
+  attachments Attachment[]
+  chunks     DocumentChunk[]
 
   @@index([workspaceId, updatedAt])
   @@index([searchVector], type: Gin)
@@ -198,8 +205,13 @@ model Comment {
   parentId     String?
   authorId     String
   body         String
+  // Legacy Yjs relative positions (pre-OT); only quotedText is still used for these.
   anchorStart  String?
   anchorEnd    String?
+  // Document positions at OT version anchorVersion; the collab server maps them forward.
+  anchorFrom    Int?
+  anchorTo      Int?
+  anchorVersion Int?
   quotedText   String?
   resolvedAt   DateTime?
   resolvedById String?
@@ -295,6 +307,36 @@ model Favorite {
 
   @@id([userId, documentId])
   @@index([userId])
+}
+
+model DocumentChunk {
+  id         String   @id @default(uuid())
+  documentId String
+  ord        Int
+  text       String
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, ord])
+  @@index([documentId])
+}
+
+model Attachment {
+  id          String   @id @default(uuid())
+  documentId  String
+  uploaderId  String
+  key         String
+  filename    String
+  contentType String
+  size        Int
+  createdAt   DateTime @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploader User     @relation("AttachmentUploader", fields: [uploaderId], references: [id])
+
+  @@index([documentId])
 }
 
 model RecentDocument {

@@ -197,6 +197,17 @@
   color: var(--brand);
   text-decoration: underline;
 }
+.prose-doc .ProseMirror img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1em 0;
+}
+.prose-doc .ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 .prose-doc .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   color: var(--muted);

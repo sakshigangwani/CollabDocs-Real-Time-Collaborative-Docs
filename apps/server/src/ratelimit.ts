@@ -1,12 +1,9 @@
-import Redis from "ioredis";
+import { createRedis } from "./redis.js";
 
-export const rateLimitRedis = process.env.REDIS_URL
-  ? new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: 1,
-      lazyConnect: true,
-      enableReadyCheck: false,
-    })
-  : undefined;
+export const rateLimitRedis = createRedis("ratelimit", {
+  maxRetriesPerRequest: 1,
+  lazyConnect: true,
+});
 
 export const rateLimitOptions = {
   global: true,

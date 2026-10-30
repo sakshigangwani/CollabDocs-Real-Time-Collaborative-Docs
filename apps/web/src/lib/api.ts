@@ -48,6 +48,56 @@ export type SearchParams = {
   within?: "7" | "30";
 };
 
+export type AttachmentDTO = {
+  id: string;
+  documentId: string;
+  filename: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+  url: string;
+};
+
+export type StorageInfo = {
+  configured: boolean;
+  driver: "s3" | "local";
+  maxBytes: number;
+};
+
+export type AiInfo = {
+  configured: boolean;
+  model: string | null;
+  topK: number;
+};
+
+export type Citation = {
+  n: number;
+  documentId: string;
+  documentTitle: string;
+  ord: number;
+  text: string;
+  similarity: number;
+};
+
+export type AskResult = {
+  answer: string;
+  citations: Citation[];
+  model: string;
+  retrieved: number;
+};
+
+export type AiScope = "document" | "workspace";
+
+export type AiAction =
+  | "rewrite"
+  | "summarize"
+  | "grammar"
+  | "shorten"
+  | "lengthen"
+  | "professional"
+  | "friendly"
+  | "translate";
+
 export type Collaborator = {
   id: string;
   email: string;
@@ -93,6 +143,9 @@ export type CommentDTO = {
   body: string;
   anchorStart: string | null;
   anchorEnd: string | null;
+  anchorFrom: number | null;
+  anchorTo: number | null;
+  anchorVersion: number | null;
   quotedText: string | null;
   resolved: boolean;
   resolvedAt: string | null;
@@ -106,8 +159,9 @@ export type CommentDTO = {
 export type CommentInput = {
   body: string;
   parentId?: string;
-  anchorStart?: string;
-  anchorEnd?: string;
+  anchorFrom?: number;
+  anchorTo?: number;
+  anchorVersion?: number;
   quotedText?: string;
 };
 
@@ -202,6 +256,30 @@ export type SharedLinkInfo = {
 function readCookie(name: string): string | undefined {
   const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
   return match ? decodeURIComponent(match[1]) : undefined;
+}
+
+export function fileUrl(path: string) {
+  return path.startsWith("/") ? `${API_URL}${path}` : path;
+}
+
+async function upload(path: string, file: File) {
+  const form = new FormData();
+  form.append("file", file);
+  const headers: Record<string, string> = {};
+  const csrf = readCookie("csrf");
+  if (csrf) headers["X-CSRF-Token"] = csrf;
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers,
+    credentials: "include",
+    body: form,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error ?? "Upload failed. Please try again.");
+  }
+  return data;
 }
 
 async function request(method: string, path: string, body?: unknown) {
@@ -405,6 +483,40 @@ export const api = {
       const data = await request("GET", `/api/v1/workspace/audit${qs}`);
       return data.events;
     },
+  },
+
+  ai: {
+    info: (): Promise<AiInfo> => request("GET", "/api/v1/ai"),
+    ask: (docId: string, question: string, scope: AiScope): Promise<AskResult> =>
+      request("POST", `/api/v1/documents/${docId}/ai/ask`, { question, scope }),
+    action: async (
+      docId: string,
+      action: AiAction,
+      text: string,
+      language?: string,
+    ): Promise<string> => {
+      const data = await request("POST", `/api/v1/documents/${docId}/ai/action`, {
+        action,
+        text,
+        ...(language ? { language } : {}),
+      });
+      return data.result;
+    },
+    reindex: (docId: string): Promise<{ ok: boolean; chunks: number }> =>
+      request("POST", `/api/v1/documents/${docId}/ai/reindex`, {}),
+  },
+
+  attachments: {
+    storage: (): Promise<StorageInfo> => request("GET", "/api/v1/storage"),
+    upload: async (docId: string, file: File): Promise<AttachmentDTO> => {
+      const data = await upload(`/api/v1/documents/${docId}/attachments`, file);
+      return data.attachment;
+    },
+    list: async (docId: string): Promise<AttachmentDTO[]> => {
+      const data = await request("GET", `/api/v1/documents/${docId}/attachments`);
+      return data.attachments;
+    },
+    remove: (attachmentId: string) => request("DELETE", `/api/v1/attachments/${attachmentId}`),
   },
 
   billing: {

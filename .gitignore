@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # misc
 *.tsbuildinfo
+
+# local object storage (dev fallback when S3 is unset)
+apps/server/.storage/

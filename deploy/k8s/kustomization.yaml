@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: collabdocs
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - redis.yaml
+  - server.yaml
+  - web.yaml
+  - ingress.yaml
+# Migrations (./migrate) are applied separately, before each server rollout.
+images:
+  - name: collabdocs-server
+    newName: ghcr.io/your-org/collabdocs-server
+    newTag: latest
+  - name: collabdocs-web
+    newName: ghcr.io/your-org/collabdocs-web
+    newTag: latest

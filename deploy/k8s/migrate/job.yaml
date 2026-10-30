@@ -1,0 +1,19 @@
+# Applies Prisma migrations with the server image. Run it before rolling out a new
+# server version: `kubectl apply -k deploy/k8s/migrate`, then
+#   kubectl -n collabdocs wait --for=condition=complete job/collabdocs-migrate --timeout=5m
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: collabdocs-migrate
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: collabdocs-server
+          command: ["node_modules/.bin/prisma", "migrate", "deploy"]
+          envFrom:
+            - secretRef: { name: collabdocs-server }

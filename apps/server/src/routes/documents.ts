@@ -12,6 +12,7 @@ import {
 } from "../permissions.js";
 import { colorForUser, mintCollabToken } from "../auth/collab-token.js";
 import { reindex } from "../search.js";
+import { deleteObject } from "../storage.js";
 
 function publicDoc(doc: Document, role?: DocRole | null, isFavorite?: boolean) {
   return {
@@ -252,6 +253,14 @@ export async function documentRoutes(app: FastifyInstance) {
       },
     });
     if (!existing) return reply.code(404).send({ error: "Document not found." });
+
+    const attachments = await prisma.attachment.findMany({
+      where: { documentId: id },
+      select: { key: true },
+    });
+    const keys = attachments.map((a) => a.key);
+    if (existing.snapshotKey) keys.push(existing.snapshotKey);
+    await Promise.all(keys.map((key) => deleteObject(key).catch(() => {})));
 
     await prisma.document.delete({ where: { id } });
     return { ok: true };

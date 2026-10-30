@@ -9,14 +9,9 @@ import Highlight from "@tiptap/extension-highlight";
 import { TableKit } from "@tiptap/extension-table";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
-import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCaret from "@tiptap/extension-collaboration-caret";
-import * as Y from "yjs";
-import { IndexeddbPersistence } from "y-indexeddb";
-import { HocuspocusProvider } from "@hocuspocus/provider";
 import DOMPurify from "dompurify";
 import { SlashCommand } from "./editor/SlashCommand";
-import { SearchReplace } from "./editor/SearchReplace";
+import { SearchReplace, goToMatch, setSearch } from "./editor/SearchReplace";
 import FindReplaceBar from "./editor/FindReplaceBar";
 import {
   CommentHighlight,
@@ -24,8 +19,12 @@ import {
   type CommentRange,
 } from "./editor/CommentHighlight";
 import CommentsDrawer from "./comments/CommentsDrawer";
+import AiPanel from "./ai/AiPanel";
+import AiActions from "./ai/AiActions";
 import NotificationBell from "./NotificationBell";
 import { anchorToRange, selectionToAnchor, type Anchor } from "../lib/anchors";
+import { DocImage } from "../lib/docSchema";
+import { OTCollab, OTProvider } from "../lib/ot";
 import {
   ArrowLeft,
   ChevronRight,
@@ -54,6 +53,8 @@ import {
   Bell,
   BellRing,
   BellOff,
+  ImagePlus,
+  Sparkles,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import ShareDialog from "./ShareDialog";
@@ -66,6 +67,7 @@ import {
 import {
   api,
   COLLAB_URL,
+  type AiInfo,
   type CollabToken,
   type CommentDTO,
   type DocRole,
@@ -79,9 +81,9 @@ import {
 } from "../lib/collab";
 
 type CollabSession = {
-  ydoc: Y.Doc;
-  persistence: IndexeddbPersistence;
-  provider: HocuspocusProvider;
+  provider: OTProvider;
+  // Bumped when the server makes the editor restart from a fresh document state.
+  generation: number;
 };
 
 const ROLE_RANK: Record<DocRole, number> = {
@@ -106,6 +108,12 @@ const TEXT_COLORS = [
 const HIGHLIGHT_COLORS = [
   "#fef08a", "#fde68a", "#bbf7d0", "#bfdbfe", "#ddd6fe", "#fbcfe8",
 ];
+
+const IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"];
+
+function imageFilesFrom(list: FileList | null | undefined) {
+  return Array.from(list ?? []).filter((f) => IMAGE_TYPES.includes(f.type));
+}
 
 function countWords(text: string) {
   const trimmed = text.trim();
@@ -208,7 +216,35 @@ function ColorMenu({
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function ImageButton({ onPick }: { onPick: (file: File) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={IMAGE_TYPES.join(",")}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onPick(file);
+          e.target.value = "";
+        }}
+      />
+      <ToolbarButton label="Insert image" onClick={() => inputRef.current?.click()}>
+        <ImagePlus size={16} />
+      </ToolbarButton>
+    </>
+  );
+}
+
+function Toolbar({
+  editor,
+  onPickImage,
+}: {
+  editor: Editor;
+  onPickImage: (file: File) => void;
+}) {
   return (
     <div className="sticky top-14 z-10 flex justify-center px-4 py-3">
       <div className="flex flex-wrap items-center gap-0.5 rounded-xl border border-border bg-surface/90 px-1.5 py-1.5 shadow-lg shadow-black/5 backdrop-blur">
@@ -321,6 +357,10 @@ function Toolbar({ editor }: { editor: Editor }) {
         >
           <Code2 size={16} />
         </ToolbarButton>
+
+        <Divider />
+
+        <ImageButton onPick={onPickImage} />
       </div>
     </div>
   );
@@ -331,11 +371,15 @@ function SelectionMenu({
   canEdit,
   canComment,
   onComment,
+  docId,
+  aiReady,
 }: {
   editor: Editor;
   canEdit: boolean;
   canComment: boolean;
   onComment: () => void;
+  docId: string;
+  aiReady: boolean;
 }) {
   return (
     <BubbleMenu editor={editor} shouldShow={({ from, to }) => from !== to}>
@@ -387,6 +431,19 @@ function SelectionMenu({
             </ToolbarButton>
           </>
         )}
+        {canEdit && aiReady && (
+          <>
+            <Divider />
+            <AiActions
+              docId={docId}
+              getSelection={() => {
+                const { from, to } = editor.state.selection;
+                return editor.state.doc.textBetween(from, to, " ");
+              }}
+              onReplace={(text) => editor.chain().focus().insertContent(text).run()}
+            />
+          </>
+        )}
       </div>
     </BubbleMenu>
   );
@@ -413,19 +470,18 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
 
   useEffect(() => {
     if (!auth) return;
-    const ydoc = new Y.Doc();
-    const persistence = new IndexeddbPersistence(`collabdocs-${doc.id}`, ydoc);
-    const provider = new HocuspocusProvider({
-      url: COLLAB_URL,
-      name: doc.id,
-      document: ydoc,
-      token: auth.token,
-    });
-    setSession({ ydoc, persistence, provider });
+    let active = true;
+    const provider = new OTProvider(COLLAB_URL, doc.id, auth.token);
+    const onAuthFail = () => active && !provider.initial && setAuthError(true);
+    const onReset = () => active && setSession((s) => s && { ...s, generation: s.generation + 1 });
+    provider.on("authenticationFailed", onAuthFail);
+    provider.on("reset", onReset);
+    provider.ready().then(() => active && setSession({ provider, generation: 0 }));
     return () => {
+      active = false;
+      provider.off("authenticationFailed", onAuthFail);
+      provider.off("reset", onReset);
       provider.destroy();
-      persistence.destroy();
-      ydoc.destroy();
       setSession(null);
     };
   }, [auth, doc.id]);
@@ -455,7 +511,9 @@ export default function DocEditor({ doc }: { doc: FullDocument }) {
     );
   }
 
-  return <CollabEditor key={doc.id} doc={doc} auth={auth} session={session} />;
+  return (
+    <CollabEditor key={`${doc.id}:${session.generation}`} doc={doc} auth={auth} session={session} />
+  );
 }
 
 function CollabEditor({
@@ -491,6 +549,12 @@ function CollabEditor({
   const [subLevel, setSubLevel] = useState<SubscriptionLevel>("mentions");
   const [subOpen, setSubOpen] = useState(false);
   const [findOpen, setFindOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiInfo, setAiInfo] = useState<AiInfo | null>(null);
+  const [uploading, setUploading] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const editorRef = useRef<Editor | null>(null);
+  const uploadRef = useRef<(file: File, pos?: number) => void>(() => {});
   const dirtyRef = useRef(false);
   const restoredRef = useRef(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -503,10 +567,10 @@ function CollabEditor({
   const lastActiveSent = useRef(0);
 
   function markTyping() {
-    session.provider.awareness?.setLocalStateField("typing", true);
+    session.provider.setLocalState({ typing: true });
     clearTimeout(typingTimer.current);
     typingTimer.current = setTimeout(() => {
-      session.provider.awareness?.setLocalStateField("typing", false);
+      session.provider.setLocalState({ typing: false });
     }, 1500);
   }
 
@@ -514,16 +578,76 @@ function CollabEditor({
     const now = Date.now();
     if (now - lastActiveSent.current < 5000) return;
     lastActiveSent.current = now;
-    session.provider.awareness?.setLocalStateField("lastActive", now);
+    session.provider.setLocalState({ lastActive: now });
   }
+
+  const uploadImage = useCallback(
+    async (file: File, pos?: number) => {
+      setUploading((n) => n + 1);
+      setUploadError(null);
+      try {
+        const attachment = await api.attachments.upload(doc.id, file);
+        const editor = editorRef.current;
+        if (!editor) return;
+        const node = {
+          type: "image",
+          attrs: { src: attachment.url, alt: attachment.filename },
+        };
+        if (pos === undefined) editor.chain().focus().insertContent(node).run();
+        else editor.chain().focus().insertContentAt(pos, node).run();
+        dirtyRef.current = true;
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading((n) => n - 1);
+      }
+    },
+    [doc.id],
+  );
+  uploadRef.current = uploadImage;
+
+  useEffect(() => {
+    api.ai
+      .info()
+      .then(setAiInfo)
+      .catch(() => setAiInfo(null));
+  }, []);
+
+  const jumpToSpan = useCallback((text: string) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const needle = text.trim().slice(0, 60).replace(/\s+\S*$/, "");
+    if (!needle) return;
+    setSearch(editor, { term: needle });
+    requestAnimationFrame(() => goToMatch(editor, 1));
+  }, []);
 
   const editor = useEditor({
     editable: canEdit,
+    content: session.provider.initial?.doc,
     editorProps: {
       transformPastedHTML: (html) => DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }),
+      handleDrop: (view, event) => {
+        if (!canEdit) return false;
+        const files = imageFilesFrom((event as DragEvent).dataTransfer?.files);
+        if (!files.length) return false;
+        event.preventDefault();
+        const dropped = event as DragEvent;
+        const pos = view.posAtCoords({ left: dropped.clientX, top: dropped.clientY })?.pos;
+        files.forEach((file) => uploadRef.current(file, pos));
+        return true;
+      },
+      handlePaste: (_view, event) => {
+        if (!canEdit) return false;
+        const files = imageFilesFrom((event as ClipboardEvent).clipboardData?.files);
+        if (!files.length) return false;
+        event.preventDefault();
+        files.forEach((file) => uploadRef.current(file));
+        return true;
+      },
     },
     extensions: [
-      StarterKit.configure({ undoRedo: false }),
+      StarterKit,
       Placeholder.configure({
         placeholder: canEdit
           ? "Type '/' for commands, or just start writing…"
@@ -535,16 +659,13 @@ function CollabEditor({
       TableKit.configure({ table: { resizable: true } }),
       TaskList,
       TaskItem.configure({ nested: true }),
+      DocImage,
       SlashCommand,
       SearchReplace,
       CommentHighlight.configure({
         onActivate: (id) => activateRef.current(id),
       }),
-      Collaboration.configure({ document: session.ydoc }),
-      CollaborationCaret.configure({
-        provider: session.provider,
-        user: { name: auth.user.name, color: auth.color, id: auth.user.id },
-      }),
+      OTCollab.configure({ provider: session.provider }),
     ],
     onCreate: ({ editor }) => setWordCount(countWords(editor.getText())),
     onUpdate: ({ editor }) => {
@@ -556,38 +677,33 @@ function CollabEditor({
     },
   }, [session]);
 
+  editorRef.current = editor;
+
   useEffect(() => {
     const { provider } = session;
-    const onStatus = (e: { status: string }) =>
-      setStatus(e.status as ConnStatus);
+    const onStatus = (next: ConnStatus) => setStatus(next);
     const onAuthFail = () => setStatus("error");
     provider.on("status", onStatus);
     provider.on("authenticationFailed", onAuthFail);
+    setStatus(provider.status);
 
     const refresh = () => {
-      const states = provider.awareness?.getStates() ?? new Map();
-      const myId = provider.awareness?.clientID;
       const now = Date.now();
       const list: Peer[] = [];
-      states.forEach((state, clientId) => {
-        if (clientId === myId) return;
-        const u = state.user as
-          | { id?: string; name?: string; color?: string }
-          | undefined;
-        if (!u) return;
+      provider.peers.forEach((peer) => {
         list.push({
-          clientId,
-          userId: u.id,
-          name: u.name ?? "Anonymous",
-          color: u.color ?? "#888888",
-          status: computeStatus(state.lastActive as number | undefined, now),
-          typing: Boolean(state.typing),
+          clientId: peer.clientID,
+          userId: peer.user.id,
+          name: peer.user.name,
+          color: peer.user.color,
+          status: computeStatus(peer.lastActive ?? undefined, now),
+          typing: peer.typing,
         });
       });
       setPeers(list);
     };
 
-    provider.awareness?.on("change", refresh);
+    provider.on("peers", refresh);
     const interval = setInterval(refresh, 15000);
     refresh();
     markActivity();
@@ -595,28 +711,10 @@ function CollabEditor({
     return () => {
       provider.off("status", onStatus);
       provider.off("authenticationFailed", onAuthFail);
-      provider.awareness?.off("change", refresh);
+      provider.off("peers", refresh);
       clearInterval(interval);
     };
   }, [session]);
-
-  useEffect(() => {
-    if (!editor || !canEdit) return;
-    const initialContent = doc.content as object | null;
-    const seed = () => {
-      const meta = session.ydoc.getMap("meta");
-      if (meta.get("seeded")) return;
-      if (editor.isEmpty && initialContent) {
-        editor.commands.setContent(initialContent);
-      }
-      meta.set("seeded", true);
-    };
-    if (session.provider.isSynced) seed();
-    else session.provider.on("synced", seed);
-    return () => {
-      session.provider.off("synced", seed);
-    };
-  }, [editor, session]);
 
   useEffect(() => {
     if (followClientId == null) return;
@@ -678,7 +776,7 @@ function CollabEditor({
       const ranges: CommentRange[] = [];
       for (const thread of comments) {
         if (thread.resolved) continue;
-        const range = anchorToRange(editor, thread.anchorStart, thread.anchorEnd);
+        const range = anchorToRange(editor, session.provider, thread);
         if (range) {
           ranges.push({
             id: thread.id,
@@ -702,7 +800,7 @@ function CollabEditor({
     if (!editor) return;
     const thread = comments.find((t) => t.id === id);
     if (!thread) return;
-    const range = anchorToRange(editor, thread.anchorStart, thread.anchorEnd);
+    const range = anchorToRange(editor, session.provider, thread);
     if (!range) return;
     try {
       const coords = editor.view.coordsAtPos(range.from);
@@ -720,7 +818,7 @@ function CollabEditor({
 
   function startComment() {
     if (!editor) return;
-    const anchor = selectionToAnchor(editor);
+    const anchor = selectionToAnchor(editor, session.provider);
     if (!anchor) return;
     setPendingAnchor(anchor);
     setActiveCommentId(null);
@@ -767,7 +865,7 @@ function CollabEditor({
   useEffect(() => {
     if (!editor || !canEdit || !restoreId || restoredRef.current) return;
     restoredRef.current = true;
-    const apply = async () => {
+    (async () => {
       try {
         const content = await api.versions.restore(doc.id, restoreId);
         editor.commands.setContent(content as Parameters<typeof editor.commands.setContent>[0]);
@@ -776,13 +874,8 @@ function CollabEditor({
         // ignore
       }
       setSearchParams({}, { replace: true });
-    };
-    if (session.provider.isSynced) apply();
-    else session.provider.on("synced", apply);
-    return () => {
-      session.provider.off("synced", apply);
-    };
-  }, [editor, canEdit, restoreId, doc.id, session, setSearchParams]);
+    })();
+  }, [editor, canEdit, restoreId, doc.id, setSearchParams]);
 
   useEffect(() => {
     return () => clearTimeout(titleTimer.current);
@@ -853,6 +946,21 @@ function CollabEditor({
                 <Eye size={12} />
                 {ROLE_LABEL[role]}
               </span>
+            )}
+            {aiInfo?.configured && (
+              <button
+                onClick={() => setAiOpen((o) => !o)}
+                title="Ask your documents"
+                aria-label="Ask your documents"
+                className={
+                  "flex h-9 w-9 items-center justify-center rounded-lg transition-colors " +
+                  (aiOpen
+                    ? "bg-brand/10 text-brand"
+                    : "text-muted hover:bg-surface-muted hover:text-fg")
+                }
+              >
+                <Sparkles size={18} />
+              </button>
             )}
             <button
               onClick={() => setDrawerOpen((o) => !o)}
@@ -954,13 +1062,32 @@ function CollabEditor({
         )}
       </header>
 
-      {editor && canEdit && <Toolbar editor={editor} />}
+      {editor && canEdit && <Toolbar editor={editor} onPickImage={uploadImage} />}
+      {(uploading > 0 || uploadError) && (
+        <div className="flex justify-center px-4 pb-1">
+          {uploading > 0 ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-surface-muted px-3 py-1 text-xs text-muted">
+              <Loader2 size={12} className="animate-spin" />
+              Uploading {uploading === 1 ? "image" : `${uploading} images`}…
+            </span>
+          ) : (
+            <button
+              onClick={() => setUploadError(null)}
+              className="rounded-full bg-red-500/10 px-3 py-1 text-xs text-red-500"
+            >
+              {uploadError} (dismiss)
+            </button>
+          )}
+        </div>
+      )}
       {editor && canComment && (
         <SelectionMenu
           editor={editor}
           canEdit={canEdit}
           canComment={canComment}
           onComment={startComment}
+          docId={doc.id}
+          aiReady={Boolean(aiInfo?.configured)}
         />
       )}
 
@@ -982,6 +1109,14 @@ function CollabEditor({
         pendingQuote={pendingAnchor ? pendingAnchor.quotedText : null}
         onCreate={createComment}
         onCancelPending={() => setPendingAnchor(null)}
+      />
+
+      <AiPanel
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        docId={doc.id}
+        model={aiInfo?.model ?? null}
+        onJumpToSpan={jumpToSpan}
       />
 
       {shareOpen && (

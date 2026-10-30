@@ -1,0 +1,2220 @@
+{
+ "summary": {
+  "dataset": {
+   "corpusDocs": 10060,
+   "corpusChunks": 314,
+   "totalChunks": 37726,
+   "answerable": 159,
+   "answerableWithoutLocatableGold": 0,
+   "leakQuestions": 19,
+   "unanswerable": 20,
+   "evalUserDocs": 40,
+   "powerUserDocs": 3971
+  },
+  "retrievalProduction": {
+   "n": 159,
+   "hitAt8": 0.931,
+   "mrr": 0.672,
+   "docHitAt8": 0.956,
+   "latencyMsInclQueryEmbedding": {
+    "n": 159,
+    "p50": 206.16,
+    "p95": 337.44,
+    "p99": 729.86,
+    "max": 769.1,
+    "mean": 221.24
+   }
+  },
+  "retrievalComparison": {
+   "evalApprox": {
+    "n": 159,
+    "hitAt8": 0.931,
+    "mrr": 0.672,
+    "docHitAt8": 0.956
+   },
+   "evalExact": {
+    "n": 159,
+    "hitAt8": 0.931,
+    "mrr": 0.672,
+    "docHitAt8": 0.956
+   },
+   "powerApprox": {
+    "n": 159,
+    "hitAt8": 0.063,
+    "mrr": 0.042,
+    "docHitAt8": 0.069
+   },
+   "powerExact": {
+    "n": 159,
+    "hitAt8": 0.931,
+    "mrr": 0.672,
+    "docHitAt8": 0.956
+   },
+   "unfiltered": {
+    "n": 159,
+    "hitAt8": 0.057,
+    "mrr": 0.037,
+    "docHitAt8": 0.063
+   }
+  },
+  "annRecallVsExact": {
+   "evalUser": 1,
+   "powerUser": 0.075,
+   "powerQueriesReturningFewerThan8": 2
+  },
+  "sqlOnlyLatencyMs": {
+   "eval": {
+    "n": 159,
+    "p50": 3.91,
+    "p95": 4.62,
+    "p99": 5.91,
+    "max": 9.76,
+    "mean": 3.99
+   },
+   "power": {
+    "n": 159,
+    "p50": 6.09,
+    "p95": 7.48,
+    "p99": 8.64,
+    "max": 20.33,
+    "mean": 6.18
+   },
+   "unfiltered": {
+    "n": 159,
+    "p50": 5.35,
+    "p95": 6.44,
+    "p99": 6.88,
+    "max": 6.91,
+    "mean": 5.37
+   }
+  },
+  "aclLeakage": {
+   "answerableQueries_unfilteredTop8ContainsInaccessibleDoc": "155/159",
+   "restrictedQuestions_unfilteredRetrievesRestrictedGoldDoc": "1/19",
+   "restrictedQuestions_productionRetrievesAnyInaccessibleDoc": "0/19"
+  },
+  "endToEnd": {
+   "concurrency": 4,
+   "model": "gpt-4o-mini",
+   "httpErrors": 0,
+   "latencyMs": {
+    "all": {
+     "n": 198,
+     "p50": 887.68,
+     "p95": 1184.57,
+     "p99": 1509.17,
+     "max": 1950.74,
+     "mean": 913.71
+    },
+    "answerable": {
+     "n": 159,
+     "p50": 904.59,
+     "p95": 1201.17,
+     "p99": 1509.17,
+     "max": 1950.74,
+     "mean": 937.25
+    }
+   },
+   "answerable": {
+    "correctPerJudge": "145/159 (91.2%)",
+    "refused": "3/159 (1.9%)",
+    "answeredWithAtLeastOneCitation": "154/156 (98.7%)",
+    "citationHitsGoldChunk": "143/156 (91.7%)",
+    "citationHitsGoldDoc": "146/156 (93.6%)",
+    "outOfRangeCitationMarkersInRawAnswer": 0
+   },
+   "restrictedDocQuestions": {
+    "refused": "16/19 (84.2%)",
+    "citedInaccessibleDoc": "0/19 (0.0%)"
+   },
+   "unanswerable": {
+    "refused": "20/20 (100.0%)",
+    "citedAnything": "0/20 (0.0%)"
+   }
+  }
+ },
+ "e2e": [
+  {
+   "kind": "answerable",
+   "question": "What is the maximum number of transactions our system is projected to handle during peak times?",
+   "gold": "We project that the payments service will handle up to 15,000 transactions per minute during peak usage times.",
+   "answer": "The system is projected to handle up to 15,000 transactions per minute during peak usage times, expected to occur during the product launch on March 15, 2024 [1][8].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Payments service architecture#1",
+    "Payments service architecture#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do we expect it will take to recover from downtime in our payment processing system?",
+   "gold": "Initial testing revealed that our payment processing system can recover from downtime within three minutes due to its redundant server architecture located in two different geographical zones—Northern Virginia and San Francisco.",
+   "answer": "We expect our payment processing system can recover from downtime within three minutes due to its redundant server architecture located in two different geographical zones—Northern Virginia and San Francisco [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Payments service architecture#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When did we start implementing this payments service architecture?",
+   "gold": "The implementation process began in January 2023 and has involved three phases: requirements gathering, development, and testing.",
+   "answer": "The implementation process for the payments service architecture began in January 2023 [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Payments service architecture#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What date are we planning on launching this new payments service?",
+   "gold": "This structure consists of five primary modules: Transaction Processing, Fraud Detection, User Management, Reporting, and API Gateway.",
+   "answer": "The new payments service is planned to launch on March 15, 2024 [1][5].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Payments service architecture#0",
+    "Payments service architecture#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who leads operations related to the search cluster?",
+   "gold": "The primary responsibility for monitoring the health of this cluster falls to the Operations Team led by Sarah Chen.",
+   "answer": "The Operations Team related to the search cluster is led by Sarah Chen [1][5].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "On-call runbook: search cluster#0",
+    "On-call runbook: search cluster#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the maximum number of requests that can be processed per second across all nodes in the search cluster?",
+   "gold": "This translates to a total capacity of 5,000 requests per second for the entire cluster.",
+   "answer": "The maximum number of requests that can be processed per second across all nodes in the search cluster is 5,000 requests per second [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "On-call runbook: search cluster#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How quickly must critical alerts be resolved according to our protocol?",
+   "gold": "Critical alerts require immediate attention and must be resolved within one hour.",
+   "answer": "Critical alerts must be resolved within one hour according to the protocol outlined in your documents [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "On-call runbook: search cluster#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What should engineers do if they encounter a significant incident involving hardware?",
+   "gold": "For more complex issues that involve hardware failures or require vendor support from our cloud provider, Azure Support should also be contacted directly at their support hotline (800) 555-0123.",
+   "answer": "Engineers should escalate the issue to James Torres, the Senior Systems Architect, if they encounter a significant incident involving hardware that cannot be resolved quickly or requires additional expertise. His contact number is (415) 555-0147, and he is available after hours but prefers escalations be initiated between 8 AM and 10 PM PST on weekdays [5].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "On-call runbook: search cluster#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What time did the checkout system failure start on March 15?",
+   "gold": "The outage began at approximately 10:15 AM.",
+   "answer": "The checkout system failure on March 15, 2023, started at approximately 10:15 AM [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: checkout outage in March#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many transactions were impacted during the checkout system downtime?",
+   "gold": "Approximately 1,200 transactions were unable to be completed.",
+   "answer": "Approximately 1,200 transactions were unable to be completed during the checkout system downtime on March 15, 2023 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: checkout outage in March#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What was the estimated revenue loss due to the checkout outage?",
+   "gold": "The estimated revenue loss was $36,000.",
+   "answer": "The estimated revenue loss due to the checkout outage was $36,000 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: checkout outage in March#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is the new monitoring tool expected to be operational?",
+   "gold": "This new tool is expected to be operational by April 20, 2023.",
+   "answer": "The new monitoring tools are expected to be operational by February 1, 2024 [4].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Cloud cost optimization plan#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage increase in user engagement are we aiming for in Q3?",
+   "gold": "Our overarching objective for Q3 is to increase our app's user engagement by 25% by the end of September 2023.",
+   "answer": "The mobile team is aiming for a 25% increase in user engagement by the end of September 2023 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Q3 OKRs for the mobile team#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When do we plan to launch the personalized dashboard feature?",
+   "gold": "One major feature we are looking to launch is a personalized dashboard by August 15, 2023.",
+   "answer": "The personalized dashboard feature is planned to be launched by August 15, 2023 [8].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Q3 OKRs for the mobile team#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What tool will Jordan Lee use to manage customer feedback?",
+   "gold": "Jordan Lee will manage customer feedback collection, correlating with our targeted satisfaction score while engaging with users directly through our social media platforms and in-app surveys.",
+   "answer": "Jordan Lee will manage customer feedback collection through social media platforms and in-app surveys, but the excerpts do not specify a particular tool for this purpose. I couldn't find that in your documents.",
+   "correct": true,
+   "refused": false,
+   "cites": []
+  },
+  {
+   "kind": "answerable",
+   "question": "When is the first bi-weekly check-in meeting scheduled?",
+   "gold": "The first check-in meeting is set for July 11, 2023.",
+   "answer": "I couldn't find that in your documents.",
+   "correct": false,
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do I need to be employed here before I can take parental leave?",
+   "gold": "Employees must be employed full-time at Larkspur Robotics for a minimum of six months prior to the commencement of their leave.",
+   "answer": "To qualify for paid parental leave, employees must be employed full-time at Larkspur Robotics for a minimum of six months prior to the commencement of their leave [1][2][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Parental leave policy#2",
+    "Parental leave policy#1",
+    "Parental leave policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the maximum duration for paid parental leave available starting next year?",
+   "gold": "Effective January 1, 2024, eligible employees will be entitled to a total of 12 weeks of paid parental leave.",
+   "answer": "The maximum duration for paid parental leave available starting January 1, 2024, is a total of 12 weeks [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Parental leave policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How much time off can secondary caregivers take after a child’s birth or adoption?",
+   "gold": "Secondary caregivers are eligible for four weeks of paid parental leave upon the birth or adoption of a child.",
+   "answer": "Secondary caregivers are eligible for four weeks of paid parental leave upon the birth or adoption of a child [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Parental leave policy#2",
+    "Parental leave policy#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What tool should I use when applying for my parental leave?",
+   "gold": "Employees are encouraged to utilize our internal tools, specifically the Larkspur Leave Tracker, which can help streamline the application process.",
+   "answer": "You should utilize the Larkspur Leave Tracker to help streamline the application process and ensure that all necessary documentation is submitted in a timely manner when applying for your parental leave [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Parental leave policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who leads the team responsible for managing vendor security reviews at Larkspur Robotics?",
+   "gold": "The process is managed by the Security Compliance Team, led by Maria Chen, our Chief Information Security Officer (CISO).",
+   "answer": "The team responsible for managing vendor security reviews at Larkspur Robotics is led by Maria Chen, who is the Chief Information Security Officer (CISO) [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Vendor security review process#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long does it take for team members involved in vendor reviews to complete their annual training?",
+   "gold": "All team members involved in the vendor review process must complete annual training on best practices for cybersecurity and compliance requirements by January 15 each year.",
+   "answer": "Team members involved in the vendor review process must complete their annual training on best practices for cybersecurity and compliance requirements by January 15 each year, but the specific duration of the training is not mentioned in the excerpts provided. I couldn't find that in your documents.",
+   "correct": true,
+   "refused": false,
+   "cites": []
+  },
+  {
+   "kind": "answerable",
+   "question": "What tool does Larkspur Robotics use to track vendor interactions?",
+   "gold": "We utilize a tool called SecureTrack for tracking all vendor interactions and maintaining an updated status on their compliance journey.",
+   "answer": "Larkspur Robotics uses a tool called SecureTrack for tracking all vendor interactions and maintaining an updated status on their compliance journey [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Vendor security review process#5"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the time frame given for high-risk vendors to address deficiencies found during audits?",
+   "gold": "Vendors are required to rectify any identified deficiencies within 30 days of receiving the audit report before proceeding to final approval.",
+   "answer": "High-risk vendors are required to rectify any identified deficiencies within 30 days of receiving the audit report before proceeding to final approval [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Vendor security review process#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long does Larkspur Robotics keep customer data after their last interaction?",
+   "gold": "Customer data will be retained for a maximum period of five years following the last interaction with the client.",
+   "answer": "Larkspur Robotics retains customer data for a maximum period of five years following the last interaction with the client [2][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Customer data retention policy#1",
+    "Customer data retention policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What encryption standard does SecureDataVault use for protecting customer information?",
+   "gold": "This tool provides an additional layer of security by employing AES-256 encryption standards.",
+   "answer": "SecureDataVault uses AES-256 encryption standards for protecting customer information [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Customer data retention policy#2",
+    "Customer data retention policy#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What should an employee do if a customer wants their data deleted before five years?",
+   "gold": "Requests can be submitted through our standard Customer Support channels or via email at privacy@larkspurrobotics.com.",
+   "answer": "If a customer requests deletion of their data before the five-year retention period expires, the employee should comply promptly. Requests can be submitted through standard Customer Support channels or via email at privacy@larkspurrobotics.com, and the responsible department must process the request within 30 days to ensure compliance with privacy regulations [2][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Customer data retention policy#2",
+    "Customer data retention policy#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who is responsible for conducting training sessions on the retention policy?",
+   "gold": "Training sessions on this policy will be conducted biannually by our Compliance Officer, Sarah Jenkins.",
+   "answer": "The Compliance Officer, Sarah Jenkins, is responsible for conducting training sessions on the retention policy, which will be held biannually [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Customer data retention policy#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What date does the migration project start?",
+   "gold": "The project is scheduled to commence on March 1, 2024.",
+   "answer": "The migration project is scheduled to commence on March 1, 2024 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Kafka migration plan#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do we expect the entire migration process to take?",
+   "gold": "The migration is expected to take approximately four months.",
+   "answer": "The entire migration process is expected to take approximately four months, concluding on June 30, 2024 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Kafka migration plan#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who is responsible for leading the Kafka migration?",
+   "gold": "The project will be led by our Senior Software Engineer, Jessica Tran.",
+   "answer": "The Kafka migration project is being led by Senior Software Engineer, Jessica Tran [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Kafka migration plan#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What amount has been allocated for this project?",
+   "gold": "We have allocated $150,000 for this project which includes costs associated with training sessions.",
+   "answer": "The amount allocated for the Kafka migration project is $150,000 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Kafka migration plan#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who is leading the project regarding the new feature flag service?",
+   "gold": "This initiative is spearheaded by our Software Engineering Manager, Sarah Johnson.",
+   "answer": "The project regarding the new feature flag service is being led by Sarah Johnson, the Software Engineering Manager at Larkspur Robotics [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: feature flag service#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When are we planning to officially launch the feature flag service?",
+   "gold": "The target launch date is July 15, 2024.",
+   "answer": "The official launch of the feature flag service is targeted for July 15, 2024 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: feature flag service#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage of automated test coverage are we aiming for with this service?",
+   "gold": "One of which is to achieve at least 90% coverage in automated tests for all features controlled by flags.",
+   "answer": "We are aiming for at least 90% coverage in automated tests for all features controlled by flags with this service [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: feature flag service#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What increase in cloud costs do we anticipate due to this new system?",
+   "gold": "We estimate an increase in cloud costs by approximately 20% due to additional resources needed for the feature flag management system.",
+   "answer": "We estimate an increase in cloud costs by approximately 20% due to additional resources needed for the feature flag management system, assuming we will handle up to 1 million active users at peak times while maintaining performance standards [6].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: feature flag service#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What date did this reimbursement policy officially come into effect?",
+   "gold": "Effective as of March 1, 2023, this policy applies to all employees of Larkspur Robotics.",
+   "answer": "The expense reimbursement policy officially came into effect on March 1, 2023 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Expense reimbursement policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the maximum daily amount that can be reimbursed for meals while traveling?",
+   "gold": "The maximum reimbursement limit is set at $50 per day while traveling for business purposes.",
+   "answer": "The maximum reimbursement limit for meals while traveling for business purposes is set at $50 per day [2][3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Expense reimbursement policy#1",
+    "Remote work and travel policy#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How much can employees claim per night for lodging expenses?",
+   "gold": "Employees traveling overnight for business purposes are eligible for lodging reimbursement up to $200 per night.",
+   "answer": "Employees traveling overnight for business purposes are eligible for lodging reimbursement up to $200 per night, provided the accommodations are booked through approved vendors listed on the Internal Resources Portal [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Expense reimbursement policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do employees have to submit their expense claims after incurring an expense?",
+   "gold": "Employees must submit their expense claims within 30 days of incurring the expense.",
+   "answer": "Employees must submit their expense claims within 30 days of incurring the expense [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Expense reimbursement policy#3",
+    "Expense reimbursement policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who leads the engineering team responsible for developing new firmware?",
+   "gold": "The engineering team is led by Sarah Mitchell, Senior Firmware Engineer.",
+   "answer": "The engineering team responsible for developing new firmware is led by Sarah Mitchell, Senior Firmware Engineer [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Warehouse robot firmware release process#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long does it typically take for the testing phase of firmware updates?",
+   "gold": "The testing phase spans four weeks.",
+   "answer": "The testing phase of firmware updates typically spans four weeks [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Warehouse robot firmware release process#1",
+    "Warehouse robot firmware release process#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What happens if critical bugs are found during testing?",
+   "gold": "Any issues identified during this stage are logged in our project management system, Jira, where they are prioritized based on severity.",
+   "answer": "If critical bugs are found during testing, teams must address these issues promptly and prioritize their resolution. Any critical fixes that arise during the holiday code freeze must be resolved by January 2, 2024, and for emergency fixes that cannot wait until after January 5, teams must escalate their requests for approval from both the Engineering Director and the Product Manager assigned to their project [2][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Holiday code freeze policy#1",
+    "Holiday code freeze policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage of warehouse robots receive updates during the soft launch?",
+   "gold": "We deploy updates to a select group of 10% of our active fleet of 2,000 warehouse robots located in various warehouses nationwide.",
+   "answer": "During the soft launch, updates are deployed to a select group of 10% of the active fleet of 2,000 warehouse robots [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Warehouse robot firmware release process#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What’s the financial threshold that raises an incident's classification to critical?",
+   "gold": "Any financial impact over $25,000 elevates it to a Level 4 incident.",
+   "answer": "An incident is classified as a Level 4 (Critical) if it has a financial impact over $25,000 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Incident severity levels and escalation#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How quickly should someone escalate a serious situation classified as Level 3?",
+   "gold": "In such cases, it is essential to escalate the issue to the Incident Management Team (IMT) within one hour of identification.",
+   "answer": "A serious situation classified as Level 3 must be escalated to the Incident Management Team (IMT) within one hour of identification [2][5].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Incident severity levels and escalation#2",
+    "Incident severity levels and escalation#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When was the next training session planned for employees regarding these procedures?",
+   "gold": "The next training session is scheduled for March 15th, 2024.",
+   "answer": "The next training session for employees regarding incident response protocols is scheduled for March 15th, 2024, led by Rachel Chen from the Training Department [1]. Additionally, a training session on the customer data retention policy is scheduled for June 20, 2024 [8].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Incident severity levels and escalation#5",
+    "Customer data retention policy#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who leads the Incident Management Team during serious incidents?",
+   "gold": "The IMT is led by Sofia Martinez, our Head of Risk Management.",
+   "answer": "The Incident Management Team (IMT) is led by Sofia Martinez, our Head of Risk Management, who is responsible for coordinating the response efforts and ensuring all stakeholders are informed promptly during serious incidents [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Incident severity levels and escalation#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When should I finish reviewing the employee handbook?",
+   "gold": "You should complete this review by your third day at Larkspur Robotics.",
+   "answer": "You should complete the review of the employee handbook by your third day at Larkspur Robotics [6].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "New engineer onboarding checklist#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do I have to complete my safety training?",
+   "gold": "Failure to complete this training by the end of week two could delay your access to certain project areas.",
+   "answer": "You must complete your mandatory safety training by the end of week two of your onboarding process to avoid delays in accessing certain project areas [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "New engineer onboarding checklist#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What productivity level is expected from each engineer?",
+   "gold": "Each engineer is expected to meet or exceed a productivity threshold of 80% based on project timelines and deliverables set forth each quarter.",
+   "answer": "Each engineer is expected to meet or exceed a productivity threshold of 80% based on project timelines and deliverables set forth each quarter [5].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "New engineer onboarding checklist#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is my presentation due?",
+   "gold": "This presentation will be delivered in front of your team during the monthly all-hands meeting led by CEO Emily Carter on November 30th at 10 AM.",
+   "answer": "Your presentation is due by the end of your first month, and it will be delivered during the monthly all-hands meeting on November 30th at 10 AM [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "New engineer onboarding checklist#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the maximum number of requests allowed per hour for Basic plan users?",
+   "gold": "Users on the Basic plan will be limited to 100 requests per hour.",
+   "answer": "Users on the Basic plan will be limited to 100 requests per hour [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "API rate limiting design#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many requests can Enterprise clients make in an hour?",
+   "gold": "Enterprise clients...will enjoy a more generous allowance of 10,000 requests per hour.",
+   "answer": "Enterprise clients can make 10,000 requests per hour [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "API rate limiting design#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is RateGuard 2.0 expected to be fully integrated into our systems?",
+   "gold": "We expect RateGuard 2.0 to be fully integrated into our systems by March 15, 2024.",
+   "answer": "RateGuard 2.0 is expected to be fully integrated into our systems by March 15, 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "API rate limiting design#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is the first review of API usage limits scheduled?",
+   "gold": "The first review is scheduled for September 2024.",
+   "answer": "The first review of API usage limits is scheduled for September 2024 [1][3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "API rate limiting design#3",
+    "API rate limiting design#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What time do we run our backups each day?",
+   "gold": "Our primary database system runs on PostgreSQL, which hosts over 10 million records across various schemas including customer data, product specifications, and transaction histories.",
+   "answer": "Backups are conducted daily at 2:00 AM to minimize the impact on system performance during peak hours [3].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Database backup and restore runbook#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long does it usually take to complete an incremental backup?",
+   "gold": "Each backup is stored in an Amazon S3 bucket designated for database backups, with a retention policy set to keep daily backups for 30 days and weekly backups for six months.",
+   "answer": "An incremental backup typically takes around 15 minutes to complete [1].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Database backup and restore runbook#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who leads our Database Administrator team?",
+   "gold": "The DBA team consists of three members: Sarah Jenkins (Lead DBA), Mark Thompson (Backup Specialist), and Emily Chen (Data Integrity Analyst).",
+   "answer": "The Database Administrator team is led by Sarah Jenkins [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Database backup and restore runbook#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is our next disaster recovery drill planned?",
+   "gold": "In addition to regular backups, we conduct disaster recovery drills every quarter, with the next one scheduled for January 15th, 2024.",
+   "answer": "The next disaster recovery drill is scheduled for January 15th, 2024 [1][2][3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Database backup and restore runbook#3",
+    "Database backup and restore runbook#2",
+    "Design doc: multi-region failover#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many days per week can an employee work remotely starting from January 2024?",
+   "gold": "All employees are eligible to work remotely up to three days per week, contingent upon their role and project requirements.",
+   "answer": "Starting from January 1, 2024, all employees are eligible to work remotely up to three days per week, contingent upon their role and project requirements [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Remote work and travel policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the minimum notice period required for submitting a remote work request?",
+   "gold": "Employees wishing to take advantage of this policy must submit a request through the designated internal tool, WorkFlex, at least two weeks prior to their desired remote work days.",
+   "answer": "The minimum notice period required for submitting a remote work request is two weeks prior to the desired remote work days [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Remote work and travel policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the maximum duration allowed for business-related travel while working remotely?",
+   "gold": "Employees are allowed to travel for business-related activities up to four times a year while maintaining remote work status.",
+   "answer": "The maximum duration allowed for business-related travel while working remotely is two consecutive weeks, unless otherwise approved by senior management [1].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Remote work and travel policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How often should traveling employees check in with their teams during trips?",
+   "gold": "Larkspur Robotics recommends that any traveling employee checks in with their teams regularly via video call at least twice weekly during their travels.",
+   "answer": "Traveling employees should check in with their teams regularly via video call at least twice weekly during their travels [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Remote work and travel policy#3",
+    "Remote work and travel policy#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the maximum allowable latency for data transmission in the new telemetry system?",
+   "gold": "The primary objective is to ensure that data from each drone is reliably transmitted to our central servers with a latency threshold not exceeding 200 milliseconds while maintaining a 99.9% uptime.",
+   "answer": "The maximum allowable latency for data transmission in the new telemetry system is not to exceed 200 milliseconds [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: fleet telemetry pipeline#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who leads the design phase of the fleet telemetry pipeline?",
+   "gold": "The design phase will be led by Emily Chen, our lead systems architect.",
+   "answer": "The design phase of the fleet telemetry pipeline will be led by Emily Chen, the lead systems architect [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: fleet telemetry pipeline#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When do we expect to complete user acceptance tests for the telemetry system?",
+   "gold": "We anticipate conducting a series of user acceptance tests (UAT) beginning January 5, 2024; these tests are crucial for verifying that the telemetry pipeline meets user requirements before full deployment.",
+   "answer": "User acceptance tests (UAT) for the telemetry system are expected to be completed by January 20, 2024, following the commencement of testing on January 5, 2024 [1][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: fleet telemetry pipeline#4",
+    "Design doc: fleet telemetry pipeline#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What storage capacity must our solution handle daily from all active drones?",
+   "gold": "Our storage solution must handle up to 10 terabytes of raw telemetry data generated daily from all active drones.",
+   "answer": "Our storage solution must handle up to 10 terabytes of raw telemetry data generated daily from all active drones [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: fleet telemetry pipeline#3",
+    "Design doc: fleet telemetry pipeline#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When does the new recruitment process for backend engineers start?",
+   "gold": "The updated hiring process is set to go live on November 15, 2023.",
+   "answer": "The new recruitment process for backend engineers is set to go live on November 15, 2023 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Hiring loop for backend engineers#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many backend engineering positions do we aim to fill by the end of Q1 2024?",
+   "gold": "Our goal is to fill at least ten backend engineering positions by the end of Q1 2024.",
+   "answer": "We aim to fill at least ten backend engineering positions by the end of Q1 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Hiring loop for backend engineers#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What score must candidates achieve in their technical assessment using HackerRank?",
+   "gold": "Candidates must score at least 75% to advance to the next stage of the hiring loop.",
+   "answer": "Candidates must score at least 75% in their technical assessment using HackerRank to advance to the next stage of the hiring loop [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Hiring loop for backend engineers#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What bonus amount do employees receive for referring successful candidates?",
+   "gold": "Employees who refer candidates that successfully get hired will receive a $1,500 bonus after three months of employment for the referred individual.",
+   "answer": "Employees who refer candidates that successfully get hired will receive a $1,500 bonus after three months of employment for the referred individual [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Hiring loop for backend engineers#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When did we experience the firmware issues with our drones in Denver?",
+   "gold": "On October 15, 2023, a significant incident occurred at the Denver warehouse of Larkspur Robotics, leading to a firmware rollback on the autonomous delivery drones used in our logistics operations.",
+   "answer": "The firmware issues with the drones in Denver occurred shortly after the deployment of the firmware update on October 15, 2023, with malfunctioning reported by October 16, 2023 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: firmware rollback in the Denver warehouse#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long did it take us to complete the rollback process after identifying the issue?",
+   "gold": "The rollback process was completed by October 17 at 2:00 PM MST, restoring functionality to all affected drones within approximately three and a half hours.",
+   "answer": "The rollback process was completed by October 17 at 2:00 PM MST, which means it took approximately three and a half hours to complete after the rollback was initiated at 10:30 AM MST on October 17 [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: firmware rollback in the Denver warehouse#2",
+    "Postmortem: firmware rollback in the Denver warehouse#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What financial impact did this incident have on our operations?",
+   "gold": "During this downtime, our logistics operations faced delays in package deliveries amounting to around $50,000 in potential revenue losses and customer dissatisfaction complaints surged by approximately 40%.",
+   "answer": "The telemetry data loss incident resulted in approximately $150,000 in lost revenue due to delayed project timelines and additional costs associated with follow-up investigations and operational downtime [1][3].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Postmortem: telemetry data loss#2",
+    "Postmortem: telemetry data loss#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who led the investigation into the drone malfunctions?",
+   "gold": "An immediate investigation by the engineering team led by Senior Firmware Engineer Sarah Mitchell.",
+   "answer": "The investigation into the drone malfunctions was led by Senior Firmware Engineer Sarah Mitchell [3][6].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: firmware rollback in the Denver warehouse#0",
+    "Postmortem: firmware rollback in the Denver warehouse#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When does the annual evaluation process start this year?",
+   "gold": "The performance review cycle will commence on April 1, 2024.",
+   "answer": "The annual performance review cycle will commence on April 1, 2024 [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Performance review cycle#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What tool do we use for evaluations at Larkspur Robotics?",
+   "gold": "The review process will utilize our internal tool, Larkspur Insight.",
+   "answer": "The tool used for evaluations at Larkspur Robotics is Larkspur Insight, which has been enhanced to facilitate real-time feedback and streamline evaluation submissions [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Performance review cycle#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the deadline for managers to submit their evaluations?",
+   "gold": "Managers will then have until May 31, 2024, to provide their evaluations based on the self-assessment and ongoing performance metrics.",
+   "answer": "Managers must submit their evaluations by May 31, 2024, based on the self-assessments and ongoing performance metrics [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Performance review cycle#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do we have for peer feedback submissions?",
+   "gold": "Peer feedback submissions must be completed by May 15, 2024.",
+   "answer": "Peer feedback submissions must be completed by May 15, 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Performance review cycle#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who is responsible for overseeing the mobile app release process?",
+   "gold": "The primary owner of the checklist is Sarah Thompson, our Senior Product Manager, who oversees the entire release process and ensures that all deadlines are met.",
+   "answer": "The mobile app release process is overseen by Sarah Thompson, who is the Senior Product Manager at Larkspur Robotics [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Mobile app release checklist#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long does each mobile app release cycle usually take at Larkspur Robotics?",
+   "gold": "Each mobile app release typically follows a six-week development cycle, with specific phases allocated for coding, testing, and deployment.",
+   "answer": "Each mobile app release typically follows a six-week development cycle, which includes specific phases for coding, testing, and deployment [1][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Mobile app release checklist#0",
+    "Mobile app release checklist#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage of test cases must pass during the QA phase before moving forward?",
+   "gold": "It is crucial that at least 90% of all test cases pass during this phase; otherwise, further debugging will be required before moving to deployment.",
+   "answer": "At least 90% of all test cases must pass during the QA phase before moving forward to deployment [1][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Mobile app release checklist#2",
+    "Mobile app release checklist#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When do we typically schedule our app deployments?",
+   "gold": "All releases are scheduled for Fridays at 4 PM PST to minimize user disruption during peak usage hours over the weekend.",
+   "answer": "App deployments are typically scheduled for Fridays at 4 PM PST to minimize user disruption during peak usage hours over the weekend [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Mobile app release checklist#2",
+    "Mobile app release checklist#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do we expect the initial development phase to take?",
+   "gold": "The estimated duration for the initial development phase is 12 weeks.",
+   "answer": "The initial development phase for the map versioning project is expected to take approximately 14 weeks, culminating in a beta version available for internal testing by March 15, 2024 [6]. The robot path-planning service's initial development phase is estimated to last 12 weeks, starting on March 1, 2024, and concluding by May 24, 2024 [8].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Design doc: map versioning for warehouses#1",
+    "Design doc: robot path-planning service#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When does our project team plan to start field tests?",
+   "gold": "We anticipate that these tests will take place over a three-week period starting June 1, 2024.",
+   "answer": "The project team plans to start field tests for the robot path-planning service over a three-week period beginning June 1, 2024 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: robot path-planning service#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the budget allocated for this robot path-planning service?",
+   "gold": "The budget for the project is projected at $200,000.",
+   "answer": "The budget for the robot path-planning service is projected at $200,000, which will cover personnel costs, software licenses for development tools, and hardware testing equipment [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: robot path-planning service#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who is leading the development team for this service?",
+   "gold": "The team lead will be Sophia Chen.",
+   "answer": "The development team for the feature flag service is led by Sarah Johnson, the Software Engineering Manager [1][5].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Design doc: feature flag service#0",
+    "Design doc: feature flag service#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is our current quarterly expense on cloud services?",
+   "gold": "The current expenditure on cloud services has reached approximately $1.2 million per quarter.",
+   "answer": "The current expenditure on cloud services has reached approximately $1.2 million per quarter [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Cloud cost optimization plan#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is the audit of our existing cloud infrastructure scheduled to start?",
+   "gold": "This audit is scheduled to begin on November 1, 2023.",
+   "answer": "The audit of the existing cloud infrastructure is scheduled to begin on November 1, 2023 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Cloud cost optimization plan#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the target percentage reduction in cloud costs we aim for within six months?",
+   "gold": "We are implementing a comprehensive cloud cost optimization plan that aims to reduce these costs by at least 20% over the next six months.",
+   "answer": "The target percentage reduction in cloud costs we aim for within six months is at least 20% [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Cloud cost optimization plan#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When do we expect each department to demonstrate a reduction in their respective cloud costs?",
+   "gold": "We expect each department to demonstrate at least a 5% reduction in their respective cloud costs by the end of March 2024.",
+   "answer": "We expect each department to demonstrate at least a 5% reduction in their respective cloud costs by the end of March 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Cloud cost optimization plan#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When does this policy go into effect?",
+   "gold": "This policy is effective as of January 15, 2024.",
+   "answer": "I couldn't find that in your documents.",
+   "correct": false,
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "answerable",
+   "question": "What do employees need to do regarding password changes?",
+   "gold": "Users are required to change their passwords every 90 days.",
+   "answer": "Employees are required to change their passwords every 90 days and must adhere to complexity requirements, which include at least eight characters, one uppercase letter, one lowercase letter, one numerical digit, and one special character [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Access control and SSO policy#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How often does IT provide training sessions on using SSO?",
+   "gold": "The IT department will provide training sessions every second Tuesday of the month on how to use SSO effectively.",
+   "answer": "The IT department provides training sessions on how to use SSO effectively every second Tuesday of the month [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Access control and SSO policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is required for accessing sensitive data?",
+   "gold": "Multi-factor authentication (MFA) is mandatory when accessing sensitive data or systems containing personally identifiable information (PII).",
+   "answer": "To access sensitive data, multi-factor authentication (MFA) is mandatory, which requires a combination of something you know (your password) and something you have (a code sent via SMS or an authentication app) [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Access control and SSO policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage of inquiries are expected to be resolved during the first contact?",
+   "gold": "CSRs are expected to resolve 70% of inquiries within the first contact.",
+   "answer": "CSRs are expected to resolve 70% of inquiries within the first contact [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Customer support escalation guide#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do we have to acknowledge escalated Level 2 tickets?",
+   "gold": "Engineering teams are required to acknowledge escalated tickets within 24 hours.",
+   "answer": "Engineering teams are required to acknowledge escalated Level 2 tickets within 24 hours [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Customer support escalation guide#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the average resolution time for Level 2 escalations?",
+   "gold": "The average resolution time for Level 2 escalations is approximately five days.",
+   "answer": "The average resolution time for Level 2 escalations is approximately five days [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Customer support escalation guide#3",
+    "Customer support escalation guide#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is our next mandatory training session scheduled?",
+   "gold": "Our next training session is scheduled for March 15, 2024; attendance is mandatory for all relevant personnel.",
+   "answer": "The next mandatory training session is scheduled for March 15th, 2024, and will be led by Rachel Chen from the Training Department [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Incident severity levels and escalation#5"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the voltage rating for the lithium-ion batteries used in our AMRs?",
+   "gold": "The primary battery model utilized in our fleet is the LSP-2500, which has a nominal voltage of 24 volts.",
+   "answer": "The voltage rating for the lithium-ion batteries used in your AMRs is 24 volts [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Battery safety procedures for AMR robots#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How often should technicians perform inspections on our AMR batteries?",
+   "gold": "A comprehensive inspection procedure must be conducted bi-weekly by trained technicians.",
+   "answer": "Technicians must conduct a comprehensive inspection of the AMR batteries bi-weekly [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Battery safety procedures for AMR robots#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who should employees contact if they notice a swollen or leaking battery?",
+   "gold": "Any battery exhibiting signs of swelling or leakage must be reported immediately to the Maintenance Supervisor, Sarah Thompson.",
+   "answer": "Employees must report any battery exhibiting signs of swelling or leakage immediately to the Maintenance Supervisor, Sarah Thompson [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Battery safety procedures for AMR robots#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What temperature range is recommended for storing spare batteries?",
+   "gold": "The recommended storage temperature range is between 15°C to 25°C (59°F to 77°F), with humidity levels not exceeding 60%.",
+   "answer": "The recommended storage temperature range for spare batteries is between 15°C to 25°C (59°F to 77°F) [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Battery safety procedures for AMR robots#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the start date for this notification service project?",
+   "gold": "The project is set to commence on March 15, 2024.",
+   "answer": "The start date for the notification service project is March 15, 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: notification service#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When do we expect this notification service initiative to be completed?",
+   "gold": "The anticipated completion date is June 30, 2024.",
+   "answer": "The notification service initiative is anticipated to be completed by June 30, 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: notification service#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many employees are participating in the initial testing phase?",
+   "gold": "The initial testing phase will involve a user group of 50 employees who have opted in.",
+   "answer": "The initial testing phase will involve a user group of 50 employees who have opted in to receive notifications about system changes and updates [5].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: notification service#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage of employees prefer SMS alerts for urgent matters?",
+   "gold": "Over 80% of employees prefer receiving alerts via SMS for urgent matters.",
+   "answer": "Over 80% of employees prefer receiving alerts via SMS for urgent matters [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: notification service#2",
+    "Design doc: notification service#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage increase did we see in revenue compared to the previous quarter?",
+   "gold": "We have achieved a 15% increase in revenue compared to Q1, totaling $3.2 million.",
+   "answer": "We achieved a 15% increase in revenue compared to Q1, totaling $3.2 million [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Quarterly all-hands notes: Q2#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How much did LarkBot 5X sales increase this quarter?",
+   "gold": "Sales of LarkBot 5X have soared by 25% due to enhanced features and improved performance metrics.",
+   "answer": "LarkBot 5X sales increased by 25% this quarter due to enhanced features and improved performance metrics [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Quarterly all-hands notes: Q2#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is the beta version of LarkBot 6S expected to be rolled out?",
+   "gold": "We are preparing to roll out a beta version of our LarkBot 6S model by late August.",
+   "answer": "The beta version of the LarkBot 6S model is expected to be rolled out by late August [5].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Quarterly all-hands notes: Q2#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What was the average obstacle avoidance time before implementing the new AI navigation system?",
+   "gold": "We were able to reduce obstacle avoidance time from an average of 3.2 seconds to just under 1.5 seconds.",
+   "answer": "I couldn't find that in your documents.",
+   "correct": false,
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "answerable",
+   "question": "When did this policy go into effect?",
+   "gold": "This policy is effective starting January 1, 2024.",
+   "answer": "The Access Control and SSO policy is effective as of January 15, 2024 [6].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Access control and SSO policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the annual budget allocated for sponsorships related to open source?",
+   "gold": "Larkspur Robotics has allocated a budget of $50,000 annually for sponsorships, tools, and training related to open-source projects.",
+   "answer": "The annual budget allocated for sponsorships, tools, and training related to open-source projects at Larkspur Robotics is $50,000 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Open source contribution policy#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many paid days off can employees take each year for participating in community events?",
+   "gold": "Larkspur Robotics will provide up to three paid days per year for employees to attend or participate in these events.",
+   "answer": "Employees can take up to three paid days per year to attend or participate in community events related to open source [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Open source contribution policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When did we first notice problems with telemetry data from our drones?",
+   "gold": "On March 15, 2023, at approximately 14:30 UTC, Larkspur Robotics experienced a significant telemetry data loss incident affecting the operational data streams from our latest drone fleet, specifically the model LR-3000.",
+   "answer": "Problems with telemetry data from the drones were first noticed on March 15, 2023, at approximately 14:30 UTC, when Larkspur Robotics experienced a significant telemetry data loss incident affecting the operational data streams from the LR-3000 drone model [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: telemetry data loss#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What percentage of telemetry packets went missing during this incident?",
+   "gold": "Initial investigations revealed that 45% of the telemetry packets were unaccounted for during a crucial flight test over the Redwood Valley region.",
+   "answer": "During the telemetry data loss incident, 45% of the telemetry packets were unaccounted for [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: telemetry data loss#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What was one major consequence of this telemetry loss?",
+   "gold": "This telemetry loss resulted in approximately $150,000 in lost revenue due to delayed project timelines and additional costs associated with follow-up investigations and operational downtime.",
+   "answer": "One major consequence of the telemetry loss was approximately $150,000 in lost revenue due to delayed project timelines and additional costs associated with follow-up investigations and operational downtime [1][4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: telemetry data loss#2",
+    "Postmortem: telemetry data loss#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long had our new AI navigation algorithms been under development before this issue arose?",
+   "gold": "The flights were scheduled to evaluate our new AI navigation algorithms, which had been in development for six months and were set to be deployed in early April 2023.",
+   "answer": "The new AI navigation algorithms had been in development for six months before the telemetry data loss incident occurred on March 15, 2023 [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Postmortem: telemetry data loss#1",
+    "Postmortem: telemetry data loss#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What kind of tool do we use specifically for load testing our robotics applications?",
+   "gold": "LarkLoad Pro allows teams to create detailed test scenarios that accurately mimic user interactions with our systems.",
+   "answer": "The designated load testing tool used for our robotics applications is LarkLoad Pro, which has been customized for our specific needs [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Load testing guidelines#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many users need to be simulated during load tests?",
+   "gold": "Each robotic system must undergo load testing that simulates a minimum of 1,000 concurrent users for a duration of at least 24 hours.",
+   "answer": "A minimum of 1,000 concurrent users must be simulated during load tests for each robotic system [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Load testing guidelines#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When are team meetings held for reviewing test results?",
+   "gold": "All results should be reviewed in team meetings every Friday at 3 PM, starting from January 15th, 2024.",
+   "answer": "Team meetings for reviewing test results are held every Friday at 3 PM, starting from January 15th, 2024 [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Load testing guidelines#2",
+    "Load testing guidelines#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the response time threshold we need to meet under peak loads according to our compliance standards?",
+   "gold": "These standards require all test results to meet a response time threshold of less than two seconds for 95% of requests under peak loads; failure to meet this benchmark may result in further iterations or redesigns before final approval for deployment can be granted.",
+   "answer": "The response time threshold that must be met under peak loads is less than two seconds for 95% of requests according to the compliance standards established on March 10th, 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Load testing guidelines#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is the targeted completion date for implementing the new failover system?",
+   "gold": "This document outlines the design and implementation plan for the multi-region failover system, which is scheduled for completion by March 15, 2024.",
+   "answer": "The targeted completion date for implementing the new failover system is March 15, 2024 [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: multi-region failover#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is our goal in terms of annual downtime after implementing this strategy?",
+   "gold": "The primary objective of this initiative is to minimize downtime to less than 5 minutes annually across all services while maintaining data consistency and availability.",
+   "answer": "The goal is to minimize downtime to less than 5 minutes annually across all services after implementing the multi-region failover strategy [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: multi-region failover#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How often will disaster recovery drills be conducted once the new system is implemented?",
+   "gold": "Periodic disaster recovery drills will be conducted quarterly to validate the effectiveness of the failover processes; these drills are scheduled for January, April, July, and October of each year.",
+   "answer": "Disaster recovery drills will be conducted quarterly, with drills scheduled for January, April, July, and October of each year [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: multi-region failover#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What tool will we use for project management during this implementation?",
+   "gold": "To facilitate communication across teams and streamline project management tasks, we will utilize Jira for tracking progress and Slack for real-time updates among team members.",
+   "answer": "The project management tool that will be used during this implementation is Jira [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: multi-region failover#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the typical experience requirement for someone starting as a Junior Engineer?",
+   "gold": "Junior Engineers are expected to have less than two years of relevant experience.",
+   "answer": "The Junior Engineer position is typically an entry-level role for recent graduates or individuals with less than two years of relevant experience [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Engineering career ladder#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long does it usually take for a Junior Engineer to be eligible for promotion?",
+   "gold": "After gaining two years of experience and demonstrating proficiency in core competencies such as coding in Python and understanding basic circuit design, a Junior Engineer can be promoted to the Engineer level.",
+   "answer": "A Junior Engineer can be promoted to the Engineer level after gaining two years of experience and demonstrating proficiency in core competencies such as coding in Python and understanding basic circuit design [2][3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Engineering career ladder#1",
+    "Engineering career ladder#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is one requirement for Senior Engineers regarding project budgets?",
+   "gold": "Senior Engineers are expected to manage larger projects with budgets exceeding $150,000.",
+   "answer": "Senior Engineers are expected to manage larger projects with budgets exceeding $150,000 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Engineering career ladder#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How frequently do performance reviews occur?",
+   "gold": "Performance reviews occur biannually in March and September, focusing on individual growth trajectories aligned with company goals.",
+   "answer": "Performance reviews at Larkspur Robotics occur biannually in March and September, focusing on individual growth trajectories aligned with company goals [7].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Engineering career ladder#5"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who leads our incident response team?",
+   "gold": "Emily Chen is our Chief Information Security Officer (CISO), who has over 10 years of experience in cybersecurity.",
+   "answer": "The incident response team is led by Emily Chen, the Chief Information Security Officer (CISO) at Larkspur Robotics [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Security incident response plan#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What should an employee do if they suspect a security breach?",
+   "gold": "Any employee who suspects a security incident must report it immediately through our secure internal ticketing system.",
+   "answer": "An employee who suspects a security incident must report it immediately through the secure internal ticketing system [2][6].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Security incident response plan#1",
+    "Access control and SSO policy#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How quickly does the team respond after receiving an incident report?",
+   "gold": "The response team will initiate a triage process within 30 minutes.",
+   "answer": "Upon receiving an incident report, the response team will initiate a triage process within 30 minutes [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Security incident response plan#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is included in post-incident reports?",
+   "gold": "These reports will include a timeline of events, actions taken during each phase of the response, lessons learned, and recommendations for future prevention measures.",
+   "answer": "Post-incident reports must include a timeline of events, actions taken during each phase of the response, lessons learned, and recommendations for future prevention measures. These reports are to be completed within seven days following an incident's resolution and are reviewed by Emily Chen before being presented to senior management during quarterly security reviews [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Security incident response plan#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is the monthly fee for businesses starting out with fleet management?",
+   "gold": "Priced at $199 per month, this tier includes essential features such as real-time tracking, basic reporting capabilities, and email support.",
+   "answer": "The monthly fee for businesses starting out with fleet management, under the Basic tier, is $199 per month. This tier includes essential features such as real-time tracking, basic reporting capabilities, and email support, allowing businesses to manage up to 25 vehicles efficiently [1][3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Pricing tiers for the fleet management product#1",
+    "Pricing tiers for the fleet management product#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How many vehicles can a company handle under the Professional plan?",
+   "gold": "Companies can manage up to 100 vehicles under this plan.",
+   "answer": "A company can manage up to 100 vehicles under the Professional plan [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Pricing tiers for the fleet management product#1"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What discount are we offering for new subscriptions before a certain date?",
+   "gold": "As part of our launch strategy for the new pricing structure, we are offering a limited-time discount of 15% for the first six months for all new subscriptions made before March 31, 2024.",
+   "answer": "We are offering a limited-time discount of 15% for the first six months for all new subscriptions made before March 31, 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Pricing tiers for the fleet management product#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When should sales teams complete their training on the new pricing tiers?",
+   "gold": "To ensure a smooth transition into this new pricing model, all sales teams are required to familiarize themselves with each tier's benefits comprehensively by December 15, 2023.",
+   "answer": "Sales teams are required to familiarize themselves with each tier's benefits comprehensively by December 15, 2023, with training sessions held on December 10 and December 20 to facilitate this understanding [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Pricing tiers for the fleet management product#5",
+    "Pricing tiers for the fleet management product#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who is managing the development team for this new mapping tool?",
+   "gold": "The project is being spearheaded by Thomas Chen, our Lead Software Engineer.",
+   "answer": "The development team for the new mapping tool, MapTrack, is being managed by Thomas Chen, who is the Lead Software Engineer [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: map versioning for warehouses#1",
+    "Design doc: map versioning for warehouses#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long do we expect it will take to update warehouse maps with the new system?",
+   "gold": "By implementing MapTrack, we expect to reduce the time taken for updates from six months to just one week.",
+   "answer": "With the implementation of MapTrack, the time taken for updates to warehouse maps is expected to reduce from six months to just one week [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: map versioning for warehouses#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What security measures are planned for data handling in this project?",
+   "gold": "We will ensure that all data transmissions are encrypted using AES-256 standards.",
+   "answer": "The project plans to implement several security measures for data handling, including the use of encrypted protocols such as TLS v1.2 or higher for drone communications to protect sensitive information from eavesdropping or tampering [1]. Additionally, access controls based on AWS IAM policies will restrict who can view or modify telemetry data in the PostgreSQL database [1]. For the notification service, all communication between services will also be encrypted using TLS protocols, and access controls will be implemented through AWS IAM policies [6].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Design doc: fleet telemetry pipeline#3",
+    "Design doc: notification service#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What performance capability do we anticipate from the new mapping tool regarding location updates?",
+   "gold": "We expect MapTrack to handle up to 10,000 real-time location updates per minute without degradation in performance.",
+   "answer": "We expect MapTrack to handle up to 10,000 real-time location updates per minute without degradation in performance [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Design doc: map versioning for warehouses#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When does our holiday coding freeze start this year?",
+   "gold": "This year, the holiday code freeze will begin on December 15, 2023.",
+   "answer": "The holiday coding freeze this year will begin on December 15, 2023, and will last until January 5, 2024 [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Holiday code freeze policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long is the holiday code freeze supposed to last?",
+   "gold": "It will last until January 5, 2024.",
+   "answer": "The holiday code freeze will last from December 15, 2023, until January 5, 2024, making it a total of 21 days [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Holiday code freeze policy#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What tool do we use for quality assurance testing during this period?",
+   "gold": "The testing phase should include at least two rounds of QA review using our proprietary toolset, TestPilot Pro.",
+   "answer": "The Quality Assurance (QA) team conducts extensive manual and automated tests using tools such as Selenium for automated UI testing and JUnit for unit tests during the testing phase of the mobile app release process [5][6].",
+   "correct": false,
+   "refused": false,
+   "cites": [
+    "Mobile app release checklist#1",
+    "Mobile app release checklist#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who needs to approve urgent changes during the freeze?",
+   "gold": "Teams must escalate their requests through our internal communication channel and receive approval from both Sarah Thompson and the Product Manager assigned to their project.",
+   "answer": "Urgent changes during the freeze must be approved by both Sarah Thompson, the Engineering Director, and the Product Manager assigned to the project [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Holiday code freeze policy#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who oversees the deployment process at Larkspur Robotics?",
+   "gold": "The deployment process is overseen by the DevOps team led by Sarah Thompson, our Senior DevOps Engineer.",
+   "answer": "The deployment process at Larkspur Robotics is overseen by the DevOps team led by Sarah Thompson, the Senior DevOps Engineer [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Machine learning model deployment process#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What tools do we use for orchestrating and containerizing applications?",
+   "gold": "This team has established a standardized pipeline that operates within our cloud infrastructure using tools such as Kubernetes for orchestration and Docker for containerization.",
+   "answer": "We use Kubernetes for orchestration and Docker for containerization in our deployment process at Larkspur Robotics [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Machine learning model deployment process#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How long does it take to complete the development stage of a model?",
+   "gold": "The development stage typically lasts between three to six weeks, depending on the complexity of the model and the data involved.",
+   "answer": "The development stage of a machine learning model typically lasts between three to six weeks, depending on the complexity of the model and the data involved [3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Machine learning model deployment process#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When do we usually schedule production deployments?",
+   "gold": "The deployment window is typically scheduled during off-peak hours to minimize potential disruptions; this is generally between 2 AM and 4 AM on weekends.",
+   "answer": "Production deployments are typically scheduled during off-peak hours, generally between 2 AM and 4 AM on weekends for machine learning models [1], and on Fridays at 4 PM PST for mobile app releases [2][3].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Machine learning model deployment process#2",
+    "Mobile app release checklist#3",
+    "Mobile app release checklist#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What dates are set for our office move?",
+   "gold": "This move is scheduled to take place over the weekend of April 15-17, 2024.",
+   "answer": "The office move is scheduled to take place over the weekend of April 15-17, 2024 [4].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Office relocation plan: Austin#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How large is the new office space in Austin?",
+   "gold": "The new office space in Austin will occupy approximately 25,000 square feet at the innovative tech hub known as Capital Factory.",
+   "answer": "The new office space in Austin will occupy approximately 25,000 square feet [1][2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Office relocation plan: Austin#1",
+    "Office relocation plan: Austin#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What tool will be used to manage our inventory during the move?",
+   "gold": "The relocation team will utilize specialized tools such as MoveManager Pro for tracking inventory and coordinating logistics efficiently.",
+   "answer": "The relocation team will utilize specialized tools such as MoveManager Pro for tracking inventory and coordinating logistics efficiently [2].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Office relocation plan: Austin#2"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "How much financial support can employees expect when relocating?",
+   "gold": "These packages will include financial support for moving expenses up to $5,000 per employee and an option for temporary housing accommodations if necessary.",
+   "answer": "Employees can expect financial support for moving expenses up to $5,000 per employee as part of the relocation assistance packages offered during the transition period [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Office relocation plan: Austin#4"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What date do we need to meet WCAG 2.1 AA standards by?",
+   "gold": "Our commitment requires that we adhere to the Web Content Accessibility Guidelines (WCAG) 2.1 AA standards by March 31, 2024.",
+   "answer": "We need to meet WCAG 2.1 AA standards by March 31, 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Accessibility guidelines for the dashboard#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "Who is responsible for overseeing compliance with accessibility guidelines?",
+   "gold": "We have designated Sarah Thompson, our UX Lead, as the Accessibility Officer responsible for overseeing compliance with these guidelines.",
+   "answer": "Sarah Thompson, the UX Lead, is designated as the Accessibility Officer responsible for overseeing compliance with the accessibility guidelines [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Accessibility guidelines for the dashboard#0"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "When is the first round of accessibility training workshops scheduled?",
+   "gold": "We plan to roll out accessibility training workshops starting in January 2024.",
+   "answer": "The first round of accessibility training workshops is scheduled to start in January 2024 [1].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Accessibility guidelines for the dashboard#3"
+   ]
+  },
+  {
+   "kind": "answerable",
+   "question": "What is our target satisfaction rating from users participating in tests by December 2024?",
+   "gold": "Our target is to achieve at least an 85% satisfaction rating from users participating in accessibility testing sessions by December 2024.",
+   "answer": "The target satisfaction rating from users participating in accessibility testing sessions by December 2024 is at least 85% [5].",
+   "correct": true,
+   "refused": false,
+   "cites": [
+    "Accessibility guidelines for the dashboard#4"
+   ]
+  },
+  {
+   "kind": "restricted",
+   "question": "When is the start date for Project Heron?",
+   "gold": "The project is set to kick off on January 15, 2024.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What is the maximum number of critical bugs allowed before deployment?",
+   "gold": "We are aiming for a bug threshold of no more than five critical issues before moving into deployment.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What was our revenue figure for the first quarter of this year?",
+   "gold": "For the first quarter of 2023, the company reported a revenue of $2.5 million which shows a 15% increase compared to Q1 of the previous year.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "When is our next follow-up board meeting scheduled?",
+   "gold": "Sarah Thompson proposed a follow-up meeting scheduled for June 12, 2023 to review progress on both Project OceanWave and marketing initiatives along with preliminary results from software updates.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What’s the projected timeline for completing this acquisition?",
+   "gold": "The acquisition timeline is projected for Q3 2024.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "How much data does Coralline's platform handle on a daily basis?",
+   "gold": "The company employs a cloud-based platform that handles approximately 10 terabytes of data daily.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What is the accuracy improvement goal set for the new tide forecasting model?",
+   "gold": "The primary goal of TFM v4 is to improve the accuracy of our tide predictions by at least 15% compared to the previous version, TFM v3, which had an accuracy rate of 82%.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "When is Tidewater Analytics planning to complete its new tide forecasting model?",
+   "gold": "This document outlines the design and implementation plan for Tidewater Analytics' tide forecasting model version 4 (TFM v4), due to be completed by March 15, 2024.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What date does the new commission plan take effect?",
+   "gold": "Effective from January 1, 2024, the commission plan will be in place for a full calendar year.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "How much can members of a team earn as bonuses if they exceed their quarterly target?",
+   "gold": "If a team reaches 125% of their quarterly goal set at $300,000 by the end of March 2024, each member will receive a bonus of $2,500.",
+   "answer": "Sales personnel who achieve an average customer satisfaction score above 90% during Q1 of 2024 will be eligible for a bonus of $1,000 after successful completion of five sales contracts under the new pricing structure [4].",
+   "refused": false,
+   "cites": [
+    "Pricing tiers for the fleet management product#5"
+   ]
+  },
+  {
+   "kind": "restricted",
+   "question": "What time did we start noticing issues with CPU usage during the outage?",
+   "gold": "The initial alert indicating a potential issue came through our monitoring tool, Datadog, at 9:20 AM when CPU utilization for the DBMS exceeded 95% for over ten minutes.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "How long did it take to restore full functionality after the outage started?",
+   "gold": "By 1:45 PM, engineers confirmed that all services were back online and functioning normally.",
+   "answer": "The checkout system outage lasted for a total of 4 hours and 32 minutes, and it began at approximately 10:15 AM and was resolved by 2:47 PM [6].",
+   "refused": false,
+   "cites": [
+    "Postmortem: checkout outage in March#0"
+   ]
+  },
+  {
+   "kind": "restricted",
+   "question": "When was the partnership between Tidewater Analytics and Meridian Ports officially finalized?",
+   "gold": "The partnership was finalized on February 15, 2023.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What percentage of cost savings will Tidewater receive as part of their revenue-sharing model?",
+   "gold": "Tidewater Analytics will receive 15% of any cost savings realized by Meridian Ports through improved operational efficiencies attributed to the use of PortInsight 2.0.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What date is scheduled for the start of development on this project?",
+   "gold": "The project is scheduled to initiate its development phase on March 15, 2024.",
+   "answer": "The development of the fleet telemetry pipeline is scheduled to start on April 1, 2023 [1][2].",
+   "refused": false,
+   "cites": [
+    "Design doc: fleet telemetry pipeline#2",
+    "Design doc: fleet telemetry pipeline#1"
+   ]
+  },
+  {
+   "kind": "restricted",
+   "question": "How much raw sonar data do we expect to process each week?",
+   "gold": "Our current estimates suggest that the system will need to manage an influx of approximately 2 terabytes of raw sonar data weekly.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "How many employees are expected to be let go due to these changes?",
+   "gold": "Effective immediately, we will begin the necessary steps to reduce our workforce by 15%, which equates to approximately 30 positions across various departments.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "What is the starting date for the executive compensation review?",
+   "gold": "The review will take place over a three-month period, beginning on February 1, 2024.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "restricted",
+   "question": "How much stock options did the CEO receive and when do they begin vesting?",
+   "gold": "For example, Jonathan was awarded stock options valued at $1 million with a vesting schedule that begins on January 1, 2025.",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the company's policy on bringing pets to the office?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "How many vacation days do interns get?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the Wi-Fi password for the guest network?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "Who is the head of the legal department?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the budget for the 2027 marketing campaign?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "Which health insurance provider does the company use?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What programming language is the billing reconciliation job written in?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "When is the company holiday party this year?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the parking reimbursement limit?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "How much did the company raise in its Series C?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the gym membership stipend?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "Who approves conference talk submissions?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the dress code for customer visits?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the retention period for Slack messages?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "Which CRM does the sales team use?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "How are stock options vested for new hires?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the maximum laptop replacement budget?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What time does the cafeteria close?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "Who owns the partnership with the Chicago distribution center?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  },
+  {
+   "kind": "unanswerable",
+   "question": "What is the policy for sabbaticals after five years?",
+   "answer": "I couldn't find that in your documents.",
+   "refused": true,
+   "cites": []
+  }
+ ]
+}

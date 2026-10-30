@@ -1,0 +1,51 @@
+# Assumes ingress-nginx and cert-manager. Replace the hosts with your domains.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: collabdocs
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/proxy-body-size: 12m
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [docs.example.com, api.example.com]
+      secretName: collabdocs-tls
+  rules:
+    - host: docs.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: collabdocs-web, port: { name: http } } }
+    - host: api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: collabdocs-server, port: { name: http } } }
+---
+# WebSocket traffic gets its own Ingress so it can have its own annotations:
+# long-lived connections, and hashing on ?doc= so every editor of a document lands
+# on the same replica (fewer cross-instance hops through Redis; the step log keeps
+# it correct either way).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: collabdocs-collab
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$arg_doc"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [api.example.com]
+      secretName: collabdocs-tls
+  rules:
+    - host: api.example.com
+      http:
+        paths:
+          - path: /collab
+            pathType: Prefix
+            backend: { service: { name: collabdocs-server, port: { name: collab } } }
